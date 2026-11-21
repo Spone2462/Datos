@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animalitos — Secuencias, Tripletas y Quiniela</title>
+  <style>
+    :root {
+      --bg: #070d16;
+      --panel: #0e1726;
+      --panel-2: #142238;
+      --border: rgba(148, 163, 184, 0.2);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --green: #16a34a;
+      --teal-box: rgba(15, 118, 110, 0.22);
+      --blue-box: rgba(2, 132, 199, 0.16);
+      --danger-bg: rgba(127, 29, 29, 0.35);
+      --danger-border: rgba(248, 113, 113, 0.35);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at top, #102038, var(--bg) 68%);
+      color: var(--text);
+      padding: 12px;
+      min-height: 100vh;
+    }
+    .app {
+      max-width: 540px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .lotto-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .lotto-btn {
+      padding: 13px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: #cbd5e1;
+      font-weight: 800;
+      font-size: 0.92rem;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+    }
+    .lotto-btn.active {
+      background: var(--green);
+      border-color: #22c55e;
+      color: #ffffff;
+    }
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    select, input {
+      width: 100%;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 0.92rem;
+    }
+    select.hour-select { width: auto; min-width: 135px; font-weight: 700; }
+    .current-result {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin: 4px 0 12px 0;
+    }
+    .action-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .mini-btn {
+      padding: 8px 14px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.86rem;
+      cursor: pointer;
+    }
+    .mini-btn.danger {
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+      color: #fecaca;
+    }
+    .signal-box {
+      background: var(--teal-box);
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .quiniela-box {
+      background: var(--blue-box);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .signal-title {
+      color: #4ade80;
+      font-weight: 800;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+    .quiniela-title {
+      color: #7dd3fc;
+      font-weight: 800;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .pill {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(94, 234, 212, 0.35);
+      color: #f8fafc;
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .pill.q-pill {
+      border-color: rgba(125, 211, 252, 0.45);
+    }
+    .window-banner {
+      margin-top: 8px;
+      background: rgba(13, 148, 136, 0.25);
+      border: 1px solid rgba(45, 212, 191, 0.4);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: #ccfbf1;
+    }
+    .sec-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .sec-title {
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .grid-animals {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .animal-btn {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 6px;
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+    .animal-btn:active { transform: scale(0.97); border-color: #38bdf8; }
+    .animal-num { font-weight: 800; font-size: 0.92rem; display: block; }
+    .animal-name { font-size: 0.8rem; color: #cbd5e1; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cross-item {
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      font-size: 0.88rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .cross-item:last-child { border-bottom: none; }
+    .recent-strip {
+      font-size: 0.84rem;
+      color: #cbd5e1;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="lotto-switch">
+        <button id="btnLotto" class="lotto-btn active" onclick="setLottery('lotto')">LOTTO ACTIVO</button>
+        <button id="btnGranjita" class="lotto-btn" onclick="setLottery('granjita')">LA GRANJITA</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="top-row">
+        <span class="muted">Último resultado analizado</span>
+        <select id="hourSelect" class="hour-select" onchange="updateNextWindow()">
+          <option value="08:00 a. m.">08:00 a. m.</option>
+          <option value="09:00 a. m.">09:00 a. m.</option>
+          <option value="10:00 a. m.">10:00 a. m.</option>
+          <option value="11:00 a. m.">11:00 a. m.</option>
+          <option value="12:00 p. m.">12:00 p. m.</option>
+          <option value="01:00 p. m.">01:00 p. m.</option>
+          <option value="02:00 p. m.">02:00 p. m.</option>
+          <option value="03:00 p. m." selected>03:00 p. m.</option>
+          <option value="04:00 p. m.">04:00 p. m.</option>
+          <option value="05:00 p. m.">05:00 p. m.</option>
+          <option value="06:00 p. m.">06:00 p. m.</option>
+          <option value="07:00 p. m.">07:00 p. m.</option>
+        </select>
+      </div>
+
+      <div id="lastResultText" class="current-result">Salió 07 Perico</div>
+      <div id="recentChainText" class="recent-strip">Anteriores: —</div>
+
+      <div class="action-bar">
+        <button class="mini-btn" onclick="copySignals()">Copiar</button>
+        <button class="mini-btn" onclick="undoLast()">Deshacer</button>
+        <button class="mini-btn danger" onclick="clearSequence()">Limpiar</button>
+      </div>
+
+      <div class="signal-box">
+        <div class="signal-title" id="tripletaTitle">Tripleta Lotto Activo (3 más probables tras anteriores):</div>
+        <div id="sequenceHint" class="muted">Basado en lo que sale después de tus resultados anteriores.</div>
+        <div id="tripletaPills" class="pill-row"></div>
+        <div id="windowBanner" class="window-banner">Jugar de 04:00 a 05:00 p. m. (próximos 2 sorteos)</div>
+      </div>
+
+      <div class="quiniela-box">
+        <div class="quiniela-title">Quiniela combinada (6 animales tras ambas loterías):</div>
+        <div class="muted">Ligada a los resultados recientes de Lotto Activo y La Granjita.</div>
+        <div id="quinielaPills" class="pill-row"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <span class="sec-title">LOS QUE MÁS SEÑALES TIENEN</span>
+        <span id="signalsCount" class="muted">0 registros</span>
+      </div>
+      <div id="signalsList" class="muted">Sin coincidencias registradas todavía.</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <span class="sec-title">CRUCE ENTRE LOTERÍAS (<span id="crossLabel">LOTTO → GRANJITA</span>)</span>
+      </div>
+      <div id="crossList" class="muted">Selecciona o toca un animal para ver su secuencia cruzada.</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <span class="sec-title">Registrar resultado que acaba de salir</span>
+      </div>
+      <div class="muted" style="margin-bottom:8px;">Toca el animal para guardarlo en la lotería activa y actualizar tripleta y quiniela:</div>
+      <input id="searchInput" type="text" placeholder="Buscar número o animal (ej. 04 o Alacrán)..." oninput="renderGrid()" />
+      <div id="animalsGrid" class="grid-animals"></div>
+    </div>
+  </div>
+
+  <script>
+    const ANIMALS = [
+      { code: "0", name: "Delfín" }, { code: "00", name: "Ballena" },
+      { code: "01", name: "Carnero" }, { code: "02", name: "Toro" }, { code: "03", name: "Ciempiés" },
+      { code: "04", name: "Alacrán" }, { code: "05", name: "León" }, { code: "06", name: "Rana" },
+      { code: "07", name: "Perico" }, { code: "08", name: "Ratón" }, { code: "09", name: "Águila" },
+      { code: "10", name: "Tigre" }, { code: "11", name: "Gato" }, { code: "12", name: "Caballo" },
+      { code: "13", name: "Mono" }, { code: "14", name: "Paloma" }, { code: "15", name: "Zorro" },
+      { code: "16", name: "Oso" }, { code: "17", name: "Pavo" }, { code: "18", name: "Burro" },
+      { code: "19", name: "Chivo" }, { code: "20", name: "Cochino" }, { code: "21", name: "Gallo" },
+      { code: "22", name: "Camello" }, { code: "23", name: "Cebra" }, { code: "24", name: "Iguana" },
+      { code: "25", name: "Gallina" }, { code: "26", name: "Vaca" }, { code: "27", name: "Perro" },
+      { code: "28", name: "Zamuro" }, { code: "29", name: "Elefante" }, { code: "30", name: "Caimán" },
+      { code: "31", name: "Lapa" }, { code: "32", name: "Ardilla" }, { code: "33", name: "Pescado" },
+      { code: "34", name: "Venado" }, { code: "35", name: "Jirafa" }, { code: "36", name: "Culebra" }
+    ];
+
+    const HOURS = [
+      "08:00 a. m.", "09:00 a. m.", "10:00 a. m.", "11:00 a. m.",
+      "12:00 p. m.", "01:00 p. m.", "02:00 p. m.", "03:00 p. m.",
+      "04:00 p. m.", "05:00 p. m.", "06:00 p. m.", "07:00 p. m."
+    ];
+
+    const state = {
+      lottery: "lotto",
+      selectedCode: "07",
+      history: {
+        lotto: ["04", "10", "11", "32", "00", "19", "33", "27", "05", "02", "22", "35", "00", "04", "36", "10", "12", "30", "05", "14", "24", "19", "33", "07"],
+        granjita: ["18", "20", "12", "36", "36", "31", "09", "16", "22", "25", "28", "35", "31", "12", "03", "07", "32", "29", "26", "31", "30"]
+      }
+    };
+
+    const nameMap = Object.fromEntries(ANIMALS.map(a => [a.code, a.name]));
+
+    function getFollowScores(series, triggerCodes) {
+      const scores = {};
+      for (let i = 0; i < series.length - 1; i++) {
+        const cur = series[i];
+        const nxt = series[i + 1];
+        if (triggerCodes.includes(cur)) {
+          const weight = cur === triggerCodes[triggerCodes.length - 1] ? 2 : 1;
+          scores[nxt] = (scores[nxt] || 0) + weight;
+        }
+      }
+      if (Object.keys(scores).length < 6) {
+        const fallbackFreq = {};
+        series.forEach(c => { fallbackFreq[c] = (fallbackFreq[c] || 0) + 0.25; });
+        Object.entries(fallbackFreq).forEach(([c, v]) => {
+          scores[c] = (scores[c] || 0) + v;
+        });
+      }
+      return scores;
+    }
+
+    function setLottery(lot) {
+      state.lottery = lot;
+      document.getElementById("btnLotto").classList.toggle("active", lot === "lotto");
+      document.getElementById("btnGranjita").classList.toggle("active", lot === "granjita");
+      document.getElementById("tripletaTitle").textContent = lot === "lotto"
+        ? "Tripleta Lotto Activo (3 más probables tras anteriores):"
+        : "Tripleta La Granjita (3 más probables tras anteriores):";
+      document.getElementById("crossLabel").textContent = lot === "lotto" ? "LOTTO → GRANJITA" : "GRANJITA → LOTTO";
+      const arr = state.history[lot];
+      if (arr.length) state.selectedCode = arr[arr.length - 1];
+      renderAll();
+    }
+
+    function selectAnimal(code) {
+      state.selectedCode = code;
+      state.history[state.lottery].push(code);
+      renderAll();
+    }
+
+    function undoLast() {
+      const arr = state.history[state.lottery];
+      if (arr.length > 1) {
+        arr.pop();
+        state.selectedCode = arr[arr.length - 1];
+      }
+      renderAll();
+    }
+
+    function clearSequence() {
+      state.history[state.lottery] = [state.selectedCode];
+      renderAll();
+    }
+
+    function copySignals() {
+      const trip = Array.from(document.querySelectorAll("#tripletaPills .pill")).map(el => el.textContent).join(", ");
+      const quin = Array.from(document.querySelectorAll("#quinielaPills .pill")).map(el => el.textContent).join(", ");
+      const txt = `${document.getElementById("lastResultText").textContent} | Tripleta: ${trip} | Quiniela (6): ${quin}`;
+      navigator.clipboard?.writeText(txt);
+    }
+
+    function updateNextWindow() {
+      const idx = HOURS.indexOf(document.getElementById("hourSelect").value);
+      const h1 = HOURS[(idx + 1) % HOURS.length];
+      const h2 = HOURS[(idx + 2) % HOURS.length];
+      document.getElementById("windowBanner").textContent = `Jugar de ${h1} a ${h2} (próximos 2 sorteos)`;
+    }
+
+    function renderAll() {
+      const code = state.selectedCode;
+      document.getElementById("lastResultText").textContent = `Salió ${code} ${nameMap[code] || ""}`;
+
+      const seq = state.history[state.lottery];
+      const recentTriggers = seq.slice(-3);
+      document.getElementById("recentChainText").textContent =
+        `Anteriores considerados: ${recentTriggers.map(c => `${c} ${nameMap[c]}`).join(" → ")}`;
+
+      // Tripleta de la lotería activa (top 3 tras resultados anteriores)
+      const tripleScores = getFollowScores(seq, recentTriggers);
+      const top3 = Object.entries(tripleScores).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      document.getElementById("tripletaPills").innerHTML = top3
+        .map(([c, pts], i) => `<span class="pill">#${i + 1} ${c} ${nameMap[c]} (${pts.toFixed(1).replace(/\.0$/, "")})</span>`)
+        .join("");
+
+      // Quiniela combinada de 6 animales ligada a ambas loterías
+      const lottoTriggers = state.history.lotto.slice(-2);
+      const granjitaTriggers = state.history.granjita.slice(-2);
+      const sLotto = getFollowScores(state.history.lotto, lottoTriggers);
+      const sGranjita = getFollowScores(state.history.granjita, granjitaTriggers);
+      const combined = {};
+      ANIMALS.forEach(a => {
+        combined[a.code] = (sLotto[a.code] || 0) + (sGranjita[a.code] || 0);
+      });
+      const top6 = Object.entries(combined).sort((a, b) => b[1] - a[1]).slice(0, 6);
+      document.getElementById("quinielaPills").innerHTML = top6
+        .map(([c, pts], i) => `<span class="pill q-pill">#${i + 1} ${c} ${nameMap[c]} (${pts.toFixed(1).replace(/\.0$/, "")})</span>`)
+        .join("");
+
+      // Señales para el último animal seleccionado
+      const afterMap = {};
+      for (let i = 0; i < seq.length - 1; i++) {
+        if (seq[i] === code) {
+          const nxt = seq[i + 1];
+          afterMap[nxt] = (afterMap[nxt] || 0) + 1;
+        }
+      }
+      const ranked = Object.entries(afterMap).sort((a, b) => b[1] - a[1]);
+      document.getElementById("signalsCount").textContent = `${ranked.length} registros`;
+      document.getElementById("signalsList").innerHTML = ranked.length
+        ? ranked.map(([c, n]) => `<div class="cross-item"><strong>${c} ${nameMap[c]}</strong><span>${n} vez/veces después</span></div>`).join("")
+        : `Sin coincidencias registradas todavía para ${code} ${nameMap[code]}.`;
+
+      // Cruce entre loterías
+      const src = state.lottery === "lotto" ? state.history.lotto : state.history.granjita;
+      const dst = state.lottery === "lotto" ? state.history.granjita : state.history.lotto;
+      const crossCounts = {};
+      const limit = Math.min(src.length, dst.length);
+      for (let i = 0; i < limit; i++) {
+        if (src[i] === code) {
+          const d = dst[i];
+          crossCounts[d] = (crossCounts[d] || 0) + 1;
+        }
+      }
+      const crossRanked = Object.entries(crossCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      document.getElementById("crossList").innerHTML = crossRanked.length
+        ? crossRanked.map(([c, n]) => `<div class="cross-item"><span>Tras <strong>${code} ${nameMap[code]}</strong></span><strong>${c} ${nameMap[c]} (${n})</strong></div>`).join("")
+        : `Sin cruces registrados para ${code} ${nameMap[code]} en el tramo cargado.`;
+
+      updateNextWindow();
+      renderGrid();
+    }
+
+    function renderGrid() {
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
+      const filtered = ANIMALS.filter(a => !q || a.code.toLowerCase().includes(q) || a.name.toLowerCase().includes(q));
+      document.getElementById("animalsGrid").innerHTML = filtered.map(a => `
+        <button class="animal-btn" onclick="selectAnimal('${a.code}')">
+          <span class="animal-num">${a.code}</span>
+          <span class="animal-name">${a.name}</span>
+        </button>
+      `).join("");
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>
