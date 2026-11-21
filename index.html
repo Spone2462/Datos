@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animalitos — Secuencias, Tripletas (11 sorteos) y Quiniela</title>
+  <style>
+    :root {
+      --bg: #070d16;
+      --panel: #0e1726;
+      --panel-2: #142238;
+      --border: rgba(148, 163, 184, 0.2);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --green: #16a34a;
+      --teal-box: rgba(15, 118, 110, 0.22);
+      --blue-box: rgba(2, 132, 199, 0.16);
+      --warn-box: rgba(234, 179, 8, 0.14);
+      --danger-bg: rgba(127, 29, 29, 0.35);
+      --danger-border: rgba(248, 113, 113, 0.35);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at top, #102038, var(--bg) 68%);
+      color: var(--text);
+      padding: 12px;
+      min-height: 100vh;
+    }
+    .app {
+      max-width: 540px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .lotto-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .lotto-btn {
+      padding: 13px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: #cbd5e1;
+      font-weight: 800;
+      font-size: 0.92rem;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+    }
+    .lotto-btn.active {
+      background: var(--green);
+      border-color: #22c55e;
+      color: #ffffff;
+    }
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    select, input, textarea {
+      width: 100%;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 0.92rem;
+      font-family: inherit;
+    }
+    select.hour-select { width: auto; min-width: 135px; font-weight: 700; }
+    .current-result {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin: 4px 0 6px 0;
+    }
+    .recent-strip {
+      font-size: 0.84rem;
+      color: #cbd5e1;
+      margin-bottom: 10px;
+    }
+    .action-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .mini-btn {
+      padding: 8px 14px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.86rem;
+      cursor: pointer;
+    }
+    .mini-btn.danger {
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+      color: #fecaca;
+    }
+    .signal-box {
+      background: var(--teal-box);
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .quiniela-box {
+      background: var(--blue-box);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .quiniela-box.off-window {
+      background: var(--warn-box);
+      border-color: rgba(250, 204, 21, 0.35);
+    }
+    .signal-title {
+      color: #4ade80;
+      font-weight: 800;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+    .quiniela-title {
+      color: #7dd3fc;
+      font-weight: 800;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+    .off-badge {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #fde047;
+      background: rgba(161, 98, 7, 0.35);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .pill {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(94, 234, 212, 0.35);
+      color: #f8fafc;
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .pill.q-pill {
+      border-color: rgba(125, 211, 252, 0.45);
+    }
+    .window-banner {
+      margin-top: 8px;
+      background: rgba(13, 148, 136, 0.25);
+      border: 1px solid rgba(45, 212, 191, 0.4);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: #ccfbf1;
+    }
+    .sec-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .sec-title {
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .grid-animals {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .animal-btn {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 6px;
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+    .animal-btn:active { transform: scale(0.97); border-color: #38bdf8; }
+    .animal-num { font-weight: 800; font-size: 0.92rem; display: block; }
+    .animal-name { font-size: 0.8rem; color: #cbd5e1; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cross-item {
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      font-size: 0.88rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .cross-item:last-child { border-bottom: none; }
+    .status-note {
+      font-size: 0.8rem;
+      color: #7dd3fc;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="lotto-switch">
+        <button id="btnLotto" class="lotto-btn active" onclick="setLottery('lotto')">LOTTO ACTIVO</button>
+        <button id="btnGranjita" class="lotto-btn" onclick="setLottery('granjita')">LA GRANJITA</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="top-row">
+        <span class="muted">Último resultado analizado</span>
+        <select id="hourSelect" class="hour-select" onchange="renderAll()">
+          <option value="08:00 a. m.">08:00 a. m.</option>
+          <option value="09:00 a. m.">09:00 a. m.</option>
+          <option value="10:00 a. m.">10:00 a. m.</option>
+          <option value="11:00 a. m.">11:00 a. m.</option>
+          <option value="12:00 p. m." selected>12:00 p. m.</option>
+          <option value="01:00 p. m.">01:00 p. m.</option>
+          <option value="02:00 p. m.">02:00 p. m.</option>
+          <option value="03:00 p. m.">03:00 p. m.</option>
+          <option value="04:00 p. m.">04:00 p. m.</option>
+          <option value="05:00 p. m.">05:00 p. m.</option>
+          <option value="06:00 p. m.">06:00 p. m.</option>
+          <option value="07:00 p. m.">07:00 p. m.</option>
+        </select>
+      </div>
+
+      <div id="lastResultText" class="current-result">Salió 15 Zorro</div>
+      <div id="recentChainText" class="recent-strip">Resultados anteriores: —</div>
+
+      <div class="action-bar">
+        <button class="mini-btn" onclick="copySignals()">Copiar</button>
+        <button class="mini-btn" onclick="undoLast()">Deshacer</button>
+        <button class="mini-btn danger" onclick="clearSequence()">Limpiar</button>
+      </div>
+
+      <div class="signal-box">
+        <div class="signal-title" id="tripletaTitle">Tripleta Lotto Activo (3 animales):</div>
+        <div id="sequenceHint" class="muted">Calculada según resultados anteriores para jugar los siguientes 11 sorteos.</div>
+        <div id="tripletaPills" class="pill-row"></div>
+        <div id="windowBanner" class="window-banner">Tripleta activa para los siguientes 11 sorteos (11 jugadas)</div>
+      </div>
+
+      <div id="quinielaBox" class="quiniela-box">
+        <div id="quinielaBadge" class="off-badge" style="display:none;">Fuera de horario de quiniela (10:00 a. m. – 1:00 p. m.)</div>
+        <div class="quiniela-title">Quiniela combinada (6 animales — 10:00 a. m. a 1:00 p. m.):</div>
+        <div id="quinielaDesc" class="muted">Ligada a Lotto Activo y La Granjita para sorteos de 10:00 a. m. a 1:00 p. m.</div>
+        <div id="quinielaPills" class="pill-row"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <span class="sec-title">LOS QUE MÁS SEÑALES TIENEN</span>
+        <span id="signalsCount" class="muted">0 registros</span>
+      </div>
+      <div id="signalsList" class="muted">Sin coincidencias registradas todavía.</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <span class="sec-title">CRUCE ENTRE LOTERÍAS (<span id="crossLabel">LOTTO → GRANJITA</span>)</span>
+      </div>
+      <div id="crossList" class="muted">Selecciona o toca un animal para ver su secuencia cruzada.</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <span class="sec-title">Registrar resultado que acaba de salir</span>
+      </div>
+      <div class="muted" style="margin-bottom:8px;">Toca el animal para guardarlo en la lotería activa y actualizar tripleta (11 sorteos) y quiniela:</div>
+      <input id="searchInput" type="text" placeholder="Buscar número o animal (ej. 04 o Alacrán)..." oninput="renderGrid()" />
+      <div id="animalsGrid" class="grid-animals"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <span class="sec-title">Sumar o actualizar historial</span>
+        <span id="histStats" class="muted">0 / 0 sorteos</span>
+      </div>
+      <div class="muted" style="margin-bottom:8px;">Pega números o nombres (ej. <code>31, 15, 0</code>) y súmalos a la lotería activa.</div>
+      <textarea id="batchInput" rows="2" placeholder="Ej. 31 Lapa, 15 Zorro..."></textarea>
+      <div class="action-bar" style="margin-top:8px; margin-bottom:0;">
+        <button class="mini-btn" onclick="appendBatchToActive()">Sumar lote a lotería activa</button>
+        <button class="mini-btn danger" onclick="resetSavedHistory()">Restablecer base (hasta 12pm)</button>
+      </div>
+      <div id="saveStatus" class="status-note"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "animalitos_historial_v5";
+
+    const ANIMALS = [
+      { code: "0", name: "Delfín" }, { code: "00", name: "Ballena" },
+      { code: "01", name: "Carnero" }, { code: "02", name: "Toro" }, { code: "03", name: "Ciempiés" },
+      { code: "04", name: "Alacrán" }, { code: "05", name: "León" }, { code: "06", name: "Rana" },
+      { code: "07", name: "Perico" }, { code: "08", name: "Ratón" }, { code: "09", name: "Águila" },
+      { code: "10", name: "Tigre" }, { code: "11", name: "Gato" }, { code: "12", name: "Caballo" },
+      { code: "13", name: "Mono" }, { code: "14", name: "Paloma" }, { code: "15", name: "Zorro" },
+      { code: "16", name: "Oso" }, { code: "17", name: "Pavo" }, { code: "18", name: "Burro" },
+      { code: "19", name: "Chivo" }, { code: "20", name: "Cochino" }, { code: "21", name: "Gallo" },
+      { code: "22", name: "Camello" }, { code: "23", name: "Cebra" }, { code: "24", name: "Iguana" },
+      { code: "25", name: "Gallina" }, { code: "26", name: "Vaca" }, { code: "27", name: "Perro" },
+      { code: "28", name: "Zamuro" }, { code: "29", name: "Elefante" }, { code: "30", name: "Caimán" },
+      { code: "31", name: "Lapa" }, { code: "32", name: "Ardilla" }, { code: "33", name: "Pescado" },
+      { code: "34", name: "Venado" }, { code: "35", name: "Jirafa" }, { code: "36", name: "Culebra" }
+    ];
+
+    const QUINIELA_HOURS = new Set([
+      "10:00 a. m.", "11:00 a. m.", "12:00 p. m.", "01:00 p. m."
+    ]);
+
+    const NAME_TO_CODE = {
+      "delfin": "0", "delfín": "0", "ballena": "00",
+      "carnero": "01", "toro": "02", "ciempies": "03", "ciempiés": "03",
+      "alacran": "04", "alacrán": "04", "leon": "05", "león": "05", "rana": "06",
+      "perico": "07", "raton": "08", "ratón": "08", "aguila": "09", "águila": "09",
+      "tigre": "10", "gato": "11", "caballo": "12", "mono": "13", "paloma": "14", "zorro": "15",
+      "oso": "16", "pavo": "17", "burro": "18", "chivo": "19", "cochino": "20", "gallo": "21",
+      "camello": "22", "cebra": "23", "zebra": "23", "iguana": "24", "gallina": "25", "vaca": "26", "perro": "27",
+      "zamuro": "28", "elefante": "29", "caiman": "30", "caimán": "30", "lapa": "31", "ardilla": "32", "pescado": "33",
+      "venado": "34", "jirafa": "35", "culebra": "36"
+    };
+
+    const DEFAULT_HISTORY = {
+      lotto: [
+        "16", "31", "02", "28", "04", "22", "27", "22", "14", "05", "24", "31", "20", "01",
+        "19", "22", "03", "18", "01", "23", "16", "36", "08", "19", "14", "28", "36", "08",
+        "31", "14", "0", "35", "34", "33", "03", "23", "10", "27", "16", "05", "04", "02",
+        "15", "21", "12", "23", "21", "30", "34", "29", "35", "36", "13", "16", "28", "07",
+        "31", "28", "24", "25", "14", "27", "09", "10", "36", "30", "03", "20", "03", "22",
+        "34", "04", "36", "0", "28", "34", "10", "30", "29", "15", "0", "08", "14", "08",
+        "34", "13", "30", "07", "13", "23", "35", "24", "06", "29", "26", "30", "08", "22",
+        "04", "25", "0", "33", "34", "01", "15", "20", "15", "16", "21", "12", "17", "23",
+        "29", "34", "07", "0", "06", "08", "20", "33", "12", "23", "23", "04", "28", "06",
+        "02", "30", "15", "05", "30", "07", "01", "22", "32", "19", "07", "33", "13", "33",
+        "31", "10", "08", "27", "10", "33", "18", "07", "31", "36", "16", "23", "05", "35",
+        "34", "09", "01", "30", "27", "18", "31", "29", "12", "25", "18", "25", "19", "30",
+        "18", "35", "17", "20", "05", "11", "06", "16", "07", "05", "36", "25", "28", "14",
+        "0", "04", "04", "18", "33", "05", "36", "23", "0", "27", "25", "06", "36", "22",
+        "23", "07", "35", "07", "15", "32", "04", "06", "26", "31", "16", "07", "27", "15",
+        "14", "14", "17", "01", "01", "33", "02", "11", "29", "16", "35", "12", "19", "22",
+        "16", "16", "10", "0", "34", "31", "27", "0", "28", "28", "31", "12", "35", "32",
+        "05", "04", "35", "13", "27", "16", "0", "24", "0", "20", "11", "06", "11", "33",
+        "03", "25", "11", "30", "28", "30", "08", "18", "19", "04", "09", "25", "29", "11",
+        "17", "03", "35", "23", "07", "21", "24", "27", "23", "03", "16", "36", "34", "06",
+        "11", "19", "13", "28", "31", "12", "35", "0", "25", "20", "11", "24", "34", "32",
+        "09", "12", "05", "0", "11", "06", "14", "26", "28", "04", "26", "14", "07", "03",
+        "19", "07", "26", "03", "34", "0", "20", "14", "29", "07", "03", "21", "31", "09",
+        "10", "22", "18", "22", "05", "28", "06", "20", "23", "34", "05", "01", "24", "10",
+        "33", "09", "23", "01", "29", "01", "34", "08", "26", "32", "12", "29", "09", "15",
+        "34", "19", "26", "35", "03", "15", "26", "13", "08", "16", "01", "29", "01", "34",
+        "10", "23", "01", "05", "31", "24", "10", "04", "11", "24", "33", "02", "30", "20",
+        "25", "02", "02", "26", "12", "01", "21", "22", "0", "30", "09", "04", "32", "29",
+        "06", "29", "31", "16", "01", "10", "06", "27", "04", "11", "24", "33", "02", "30",
+        "20", "25", "0", "04", "0", "33", "25", "18", "35", "27", "16", "35", "26", "11",
+        "02", "35", "26", "35", "05", "36", "35", "24", "27", "33", "0", "16", "27", "04",
+        "25", "18", "31", "36", "32", "02", "18", "13", "02", "30", "16", "09", "14", "08",
+        "09", "10", "22", "27", "25", "18", "19", "21", "22", "13", "20", "07", "36", "34",
+        "01", "36", "01", "15", "26", "13", "12", "06", "12", "0", "29", "23", "05", "03",
+        "11", "16", "20", "28", "20", "15", "05", "04", "15", "0", "0", "31", "12", "35",
+        "03", "05", "04", "09", "09", "12", "13", "13", "11", "16", "18", "0", "01", "21",
+        "05", "24", "35", "07", "13", "04", "10", "11", "32", "32", "09", "13", "15", "36",
+        "29", "29", "36", "07", "20", "33", "01", "19", "04", "18", "25", "20", "33", "27",
+        "05", "02", "22", "35", "00", "04", "36", "10", "12", "30", "05", "14", "24", "19",
+        "33", "32", "31", "15"
+      ],
+      granjita: [
+        "25", "04", "30", "23", "12", "25", "05", "22", "07", "35", "25", "31", "08", "30",
+        "19", "28", "0", "30", "30", "13", "06", "06", "05", "29", "19", "29", "31", "16",
+        "28", "24", "03", "35", "18", "16", "01", "31", "34", "06", "20", "24", "02", "28",
+        "16", "02", "05", "27", "02", "23", "27", "24", "17", "01", "33", "28", "13", "27",
+        "16", "32", "24", "28", "09", "10", "23", "14", "17", "21", "0", "05", "33", "22",
+        "09", "31", "36", "23", "20", "14", "27", "01", "19", "30", "26", "0", "27", "18",
+        "03", "27", "36", "11", "10", "13", "15", "20", "21", "12", "03", "06", "10", "24",
+        "12", "04", "05", "07", "04", "01", "28", "08", "18", "31", "30", "23", "14", "12",
+        "0", "20", "34", "12", "0", "06", "01", "26", "13", "13", "33", "03", "21", "31",
+        "15", "21", "11", "24", "0", "0", "05", "29", "01", "09", "23", "12", "0", "07",
+        "17", "25", "07", "35", "12", "28", "21", "07", "29", "04", "02", "16", "07", "32",
+        "01", "02", "31", "16", "27", "22", "15", "19", "09", "33", "15", "15", "26", "13",
+        "32", "04", "03", "33", "34", "05", "0", "08", "32", "06", "24", "12", "19", "02",
+        "0", "16", "24", "11", "32", "13", "19", "13", "15", "31", "35", "04", "08", "07",
+        "03", "35", "15", "23", "30", "17", "10", "18", "08", "04", "34", "17", "06", "08",
+        "08", "34", "02", "17", "32", "10", "30", "01", "25", "19", "18", "20", "17", "26",
+        "35", "23", "05", "06", "06", "23", "05", "09", "09", "36", "20", "32", "17", "28",
+        "19", "25", "27", "26", "11", "19", "15", "0", "10", "0", "09", "17", "0",
