@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animalitos — 3 Loterías, Mis Jugadas y Quiniela Ligada</title>
+  <style>
+    :root {
+      --bg: #070d16;
+      --panel: #0e1726;
+      --panel-2: #142238;
+      --border: rgba(148, 163, 184, 0.2);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --green: #16a34a;
+      --purple: #7c3aed;
+      --gold-box: rgba(234, 179, 8, 0.14);
+      --teal-box: rgba(15, 118, 110, 0.22);
+      --emerald-box: rgba(5, 150, 105, 0.18);
+      --blue-box: rgba(2, 132, 199, 0.16);
+      --play-box: rgba(79, 70, 229, 0.18);
+      --danger-bg: rgba(127, 29, 29, 0.35);
+      --danger-border: rgba(248, 113, 113, 0.35);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at top, #102038, var(--bg) 68%);
+      color: var(--text);
+      padding: 12px;
+      min-height: 100vh;
+    }
+    .app {
+      max-width: 540px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .lotto-switch {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .lotto-btn {
+      padding: 11px 8px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: #cbd5e1;
+      font-weight: 800;
+      font-size: 0.82rem;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+    }
+    .lotto-btn.active {
+      background: var(--green);
+      border-color: #22c55e;
+      color: #ffffff;
+    }
+    .lotto-btn.linked.active {
+      background: var(--purple);
+      border-color: #a78bfa;
+      color: #ffffff;
+    }
+    .day-bar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .muted { color: var(--muted); font-size: 0.88rem; }
+    select, input, textarea {
+      width: 100%;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+    select.hour-select { width: auto; min-width: 135px; font-weight: 700; }
+    .current-result { font-size: 1.12rem; font-weight: 800; margin: 4px 0 6px 0; }
+    .recent-strip { font-size: 0.84rem; color: #cbd5e1; margin-bottom: 8px; }
+    .action-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .mini-btn {
+      padding: 8px 13px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+    .mini-btn.primary { background: #2563eb; border-color: #3b82f6; color: #ffffff; }
+    .mini-btn.danger { background: var(--danger-bg); border-color: var(--danger-border); color: #fecaca; }
+    .top-pick-box {
+      background: var(--gold-box);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .top-pick-title { color: #fde047; font-weight: 800; font-size: 0.92rem; margin-bottom: 4px; }
+    .top-pick-val { font-size: 1.18rem; font-weight: 800; color: #fef08a; }
+    .signal-box {
+      background: var(--teal-box);
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .chain-box {
+      background: var(--emerald-box);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .quiniela-box {
+      background: var(--blue-box);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .ticket-box {
+      background: var(--play-box);
+      border: 1px solid rgba(129, 140, 248, 0.4);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .signal-title { color: #4ade80; font-weight: 800; font-size: 0.94rem; margin-bottom: 4px; }
+    .chain-title { color: #6ee7b7; font-weight: 800; font-size: 0.94rem; margin-bottom: 4px; }
+    .quiniela-title { color: #7dd3fc; font-weight: 800; font-size: 1rem; margin-bottom: 6px; }
+    .ticket-title { color: #c7d2fe; font-weight: 800; font-size: 0.95rem; margin-bottom: 6px; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .pill {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(94, 234, 212, 0.35);
+      color: #f8fafc;
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+    .pill.c-pill { border-color: rgba(52, 211, 153, 0.45); }
+    .pill.q-pill { border-color: rgba(125, 211, 252, 0.55); background: rgba(15, 23, 42, 0.92); }
+    .sec-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .sec-title {
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .day-slots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .slot-chip {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 7px 8px;
+      font-size: 0.78rem;
+      text-align: left;
+      color: #e2e8f0;
+      cursor: pointer;
+    }
+    .slot-chip.active-slot {
+      border-color: #38bdf8;
+      background: rgba(2, 132, 199, 0.24);
+    }
+    .slot-hour { display: block; color: var(--muted); font-size: 0.72rem; }
+    .slot-val { display: block; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .grid-animals {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .animal-btn {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 6px;
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+    .animal-btn:active { transform: scale(0.97); border-color: #38bdf8; }
+    .animal-num { font-weight: 800; font-size: 0.92rem; display: block; }
+    .animal-name { font-size: 0.8rem; color: #cbd5e1; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .play-log-item {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 10px;
+      padding: 9px 10px;
+      margin-top: 8px;
+      font-size: 0.85rem;
+    }
+    .play-log-item.won {
+      border-color: #4ade80;
+      background: rgba(22, 163, 74, 0.18);
+    }
+    .status-note { font-size: 0.8rem; color: #7dd3fc; margin-top: 6px; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="lotto-switch">
+        <button id="btnLotto" class="lotto-btn active" onclick="setTab('lotto')">LOTTO ACTIVO</button>
+        <button id="btnGranjita" class="lotto-btn" onclick="setTab('granjita')">LA GRANJITA</button>
+        <button id="btnRuleta" class="lotto-btn" onclick="setTab('ruleta')">RULETA ACTIVA</button>
+        <button id="btnLigadas" class="lotto-btn linked" onclick="setTab('ligadas')">3 LOTERÍAS LIGADAS</button>
+      </div>
+
+      <div id="individualLotterySection">
+        <div class="day-bar">
+          <input id="datePicker" type="date" onchange="onDateChange()" />
+          <button class="mini-btn" onclick="stepDay(-1)">← Día ant.</button>
+          <button class="mini-btn primary" onclick="stepDay(1)">Día sig. →</button>
+        </div>
+        <div id="daySummaryText" class="status-note">Cargando día...</div>
+        <div id="daySlotsGrid" class="day-slots"></div>
+      </div>
+    </div>
+
+    <div id="singleLotteryCard" class="card">
+      <div class="top-row">
+        <span class="muted">Hora para registrar en el día elegido</span>
+        <select id="hourSelect" class="hour-select" onchange="renderAll()"></select>
+      </div>
+
+      <div id="lastResultText" class="current-result">Último guardado: —</div>
+      <div id="recentChainText" class="recent-strip">Últimos 5 resultados cercanos: —</div>
+
+      <div class="action-bar">
+        <button class="mini-btn" onclick="copyCurrentView()">Copiar datos</button>
+        <button class="mini-btn" onclick="undoLast()">Deshacer último</button>
+        <button class="mini-btn danger" onclick="clearCurrentLottery()">Limpiar</button>
+      </div>
+
+      <div class="top-pick-box">
+        <div class="top-pick-title" id="mostProbTitle">Animal más probable en salir (Lotto Activo):</div>
+        <div id="mostProbValue" class="top-pick-val">—</div>
+      </div>
+
+      <div class="signal-box">
+        <div class="signal-title">Tripleta 1 — Por repetición tras anteriores:</div>
+        <div class="muted">Animales que más se repiten luego de los anteriores, evitando los ya salidos hoy en esta lotería.</div>
+        <div id="tripleta1Pills" class="pill-row"></div>
+      </div>
+
+      <div class="chain-box">
+        <div class="chain-title">Tripleta 2 — Cadena ("uno llama al otro"):</div>
+        <div id="chainDesc" class="muted">Encadena 3 animales distintos sin repetir los ya salidos hoy en esta lotería.</div>
+        <div id="tripleta2Pills" class="pill-row"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ticket-box">
+        <div class="ticket-title">Qué jugué y a qué hora (verificador al actualizar resultados)</div>
+        <div class="muted">Anota tus animales jugados, la hora y la lotería. Al agregar un resultado, el sistema revisa automáticamente si pegaste o no pegaste.</div>
+
+        <input id="playAnimalsInput" type="text" style="margin-top:8px;" placeholder="Animales jugados (ej. 05 León, 12 Caballo, 0 Delfín)" />
+        <div class="form-grid-2">
+          <select id="playHourInput"></select>
+          <select id="playLotteryInput" onchange="syncPlayHoursWithLottery()">
+            <option value="lotto">Lotto Activo</option>
+            <option value="granjita">La Granjita</option>
+            <option value="ruleta">Ruleta Activa</option>
+            <option value="quiniela_3">Quiniela 3 ligadas (9am–1pm)</option>
+          </select>
+        </div>
+
+        <div class="action-bar" style="margin-top:8px; margin-bottom:4px;">
+          <button class="mini-btn primary" onclick="addUserPlay()">Guardar jugada</button>
+          <button class="mini-btn" onclick="loadCurrentTripletaToPlay(1)">Cargar Tripleta 1</button>
+          <button class="mini-btn" onclick="loadCurrentTripletaToPlay(2)">Cargar Tripleta 2</button>
+          <button class="mini-btn" onclick="loadQuinielaToPlay()">Cargar Quiniela 6</button>
+          <button class="mini-btn danger" onclick="clearAllPlays()">Borrar jugadas</button>
+        </div>
+
+        <div id="userPlaysList" class="muted">Sin jugadas registradas todavía.</div>
+      </div>
+    </div>
+
+    <div id="manualPickerCard" class="card">
+      <div class="sec-head">
+        <span class="sec-title">Agregar resultado — <span id="targetSlotLabel">09:00 a. m.</span></span>
+      </div>
+      <div class="muted" style="margin-bottom:8px;">Toca un animal para guardarlo en la fecha y hora elegidas y comprobar si pegaste:</div>
+      <input id="searchInput" type="text" placeholder="Buscar número o animal (ej. 04 o Alacrán)..." oninput="renderGrid()" />
+      <div id="animalsGrid" class="grid-animals"></div>
+    </div>
+
+    <div id="linkedQuinielaCard" class="card">
+      <div class="quiniela-box">
+        <div class="quiniela-title">3 LOTERÍAS LIGADAS — QUINIELA DE 6 ANIMALITOS (9:00 a. m. – 1:00 p. m.)</div>
+        <div class="muted">
+          Calculada usando los animales más probables en salir después de los resultados anteriores ligando <strong>Lotto Activo + La Granjita + Ruleta Activa</strong> (sin excluir nada). En esta modalidad de quiniela (9:00 a. m. a 1:00 p. m.) gana el primero que completa los 6 animales.
+        </div>
+        <div id="quinielaStatusNote" class="status-note"></div>
+        <div id="quiniela6Pills" class="pill-row"></div>
+        <div class="action-bar" style="margin-top:6px; margin-bottom:0;">
+          <button class="mini-btn primary" onclick="loadQuinielaToPlay()">Jugar esta Quiniela de 6</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <span class="sec-title">Historial cargado</span>
+        <span id="histStats" class="muted">0 / 0 / 0 sorteos</span>
+      </div>
+      <div class="action-bar" style="margin-bottom:0;">
+        <button class="mini-btn danger" onclick="resetSavedHistory()">Restablecer base completa</button>
+      </div>
+      <div id="saveStatus" class="status-note"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "animalitos_historial_v16";
+
+    const ANIMALS = [
+      { code: "0", name: "Delfín" }, { code: "00", name: "Ballena" },
+      { code: "01", name: "Carnero" }, { code: "02", name: "Toro" }, { code: "03", name: "Ciempiés" },
+      { code: "04", name: "Alacrán" }, { code: "05", name: "León" }, { code: "06", name: "Rana" },
+      { code: "07", name: "Perico" }, { code: "08", name: "Ratón" }, { code: "09", name: "Águila" },
+      { code: "10", name: "Tigre" }, { code: "11", name: "Gato" }, { code: "12", name: "Caballo" },
+      { code: "13", name: "Mono" }, { code: "14", name: "Paloma" }, { code: "15", name: "Zorro" },
+      { code: "16", name: "Oso" }, { code: "17", name: "Pavo" }, { code: "18", name: "Burro" },
+      { code: "19", name: "Chivo" }, { code: "20", name: "Cochino" }, { code: "21", name: "Gallo" },
+      { code: "22", name: "Camello" }, { code: "23", name: "Cebra" }, { code: "24", name: "Iguana" },
+      { code: "25", name: "Gallina" }, { code: "26", name: "Vaca" }, { code: "27", name: "Perro" },
+      { code: "28", name: "Zamuro" }, { code: "29", name: "Elefante" }, { code: "30", name: "Caimán" },
+      { code: "31", name: "Lapa" }, { code: "32", name: "Ardilla" }, { code: "33", name: "Pescado" },
+      { code: "34", name: "Venado" }, { code: "35", name: "Jirafa" }, { code: "36", name: "Culebra" }
+    ];
+
+    const HOURS_8_TO_7 = [
+      "08:00 a. m.", "09:00 a. m.", "10:00 a. m.", "11:00 a. m.",
+      "12:00 p. m.", "01:00 p. m.", "02:00 p. m.", "03:00 p. m.",
+      "04:00 p. m.", "05:00 p. m.", "06:00 p. m.", "07:00 p. m."
+    ];
+
+    const HOURS_RULETA = [
+      "09:00 a. m.", "10:00 a. m.", "11:00 a. m.",
+      "12:00 p. m.", "01:00 p. m.", "02:00 p. m.", "03:00 p. m.",
+      "04:00 p. m.", "05:00 p. m.", "06:00 p. m.", "07:00 p. m."
+    ];
+
+    const QUINIELA_WINDOW_HOURS = new Set([
+      "09:00 a. m.", "10:00 a. m.", "11:00 a. m.", "12:00 p. m.", "01:00 p. m."
+    ]);
+
+    const LOT_LABELS = {
+      lotto: "Lotto Activo",
+      granjita: "La Granjita",
+      ruleta: "Ruleta Activa",
+      quiniela_3: "Quiniela 3 ligadas (9am–1pm)"
+    };
+
+    const NAME_TO_CODE = {
+      "delfin": "0", "delfín": "0", "ballena": "00",
+      "carnero": "01", "toro": "02", "ciempies": "03", "ciempiés": "03",
+      "alacran": "04", "alacrán": "04", "leon": "05", "león": "05", "rana": "06",
+      "perico": "07", "raton": "08", "ratón": "08", "aguila": "09", "águila": "09",
+      "tigre": "10", "gato": "11", "caballo": "12", "mono": "13", "paloma": "14", "zorro": "15",
+      "oso": "16", "pavo": "17", "burro": "18", "chivo": "19", "cochino": "20", "gallo": "21",
+      "camello": "22", "cebra": "23", "zebra": "23", "iguana": "24", "gallina": "25", "vaca": "26", "perro": "27",
+      "zamuro": "28", "elefante": "29", "caiman": "30", "caimán": "30", "lapa": "31", "ardilla": "32", "pescado": "33",
+      "venado": "34", "jirafa": "35", "culebra": "36"
+    };
+
+    const BASE_LOTTO = [
+      "16", "31", "02", "28", "04", "22", "27", "22", "14", "05", "24", "31", "20", "01",
+      "19", "22", "03", "18", "01", "23", "16", "36", "08", "19", "14", "28", "36", "08",
+      "31", "14", "0", "35", "34", "33", "03", "23", "10", "27", "16", "05", "04", "02",
+      "15", "21", "12", "23", "21", "30", "34", "29", "35", "36", "13", "16", "28", "07",
+      "31", "28", "24", "25", "14", "27", "09", "10", "36", "30", "03", "20", "03", "22",
+      "34", "04", "36", "0", "28", "34", "10", "30", "29", "15", "0", "08", "14", "08",
+      "34", "13", "30", "07", "13", "23", "35", "24", "06", "29", "26", "30", "08", "22",
+      "04", "25", "0", "33", "34", "01", "15", "20", "15", "16", "21", "12", "17", "23",
+      "29", "34", "07", "0", "06", "08", "20", "33", "12", "23", "23", "04", "28", "06",
+      "02", "30", "15", "05", "30", "07", "01", "22", "32", "19", "07", "33", "13", "33",
+      "31", "10", "08", "27", "10", "33", "18", "07", "31", "36", "16", "23", "05", "35",
+      "34", "09", "01", "30", "27", "18", "31", "29", "12", "25", "18", "25", "19", "30",
+      "18", "35", "17", "20", "05", "11", "06", "16", "07", "05", "36", "25", "28", "14",
+      "0", "04", "04", "18", "33", "05", "36", "23", "0", "27", "25", "06", "36", "22",
+      "23", "07", "35", "07", "15", "32", "04", "06", "26", "31", "16", "07", "27", "15",
+      "14", "14", "17", "01", "01", "33", "02", "11", "29", "16", "35", "12", "19", "22",
+      "16", "16", "10", "0", "34", "31", "27", "0", "28", "28", "31", "12", "35", "32",
+      "05", "04", "35", "13", "27", "16", "0", "24", "0", "20", "11", "06", "11", "33",
+      "03", "25", "11", "30", "28", "30", "08", "18", "19", "04", "09", "25", "29", "11",
+      "17", "03", "35", "23", "07", "21", "24", "27", "23", "03", "16", "36", "34", "06",
+      "11", "19", "13", "28", "31", "12", "35", "0", "25", "20", "11", "24", "34", "32",
+      "09", "12", "05", "0", "11", "06", "14", "26", "28", "04", "26", "14", "07", "03",
+      "19", "07", "26", "03", "34", "0", "20", "14", "29", "07", "03", "21", "31", "09",
+      "10", "22", "18", "22", "05", "28", "06", "20", "23", "34", "05", "01", "24", "10",
+      "33", "09", "23", "01", "29", "01", "34", "08", "26", "32", "12", "29", "09", "15",
+      "34", "19", "26", "35", "03", "15", "26", "13", "08", "16", "01", "29", "01", "34",
+      "10", "23", "01", "05", "31", "24", "10", "04", "11", "24", "33", "02", "30", "20",
+      "25", "02", "02", "26", "12", "01", "21", "22", "0", "30", "09", "04", "32", "29",
+      "06", "29", "31", "16", "01", "10", "06", "27", "04", "11", "24", "33", "02", "30",
+      "20", "25", "0", "04", "0", "33", "25", "18", "35", "27", "16", "35", "26", "11",
+      "02", "35", "26", "35", "05", "36", "35", "24", "27", "33", "0", "16", "27", "04",
+      "25", "18", "31", "36", "32", "02", "18", "13", "02", "30", "16", "09", "14", "08",
+      "09", "10", "22", "27", "25", "18", "19", "21", "22", "13", "20", "07", "36", "34",
+      "01", "36", "01", "15", "26", "13", "12", "06", "12", "0", "29", "23", "05", "03",
+      "11", "16", "20", "28", "20", "15", "05", "04", "15", "0", "0", "31", "12", "35",
+      "03", "05", "04", "09", "09", "12", "13", "13", "11", "16", "18", "0", "01", "21",
+      "05", "24", "35", "07", "13", "04", "10", "11", "32", "32", "09", "13", "15", "36",
+      "29", "29", "36", "07", "20", "33", "01", "19", "04", "18", "25", "20", "33", "27",
+      "05", "02", "22", "35", "00", "04", "36", "10", "12", "30", "05", "14", "24", "19",
+      "33", "32", "31", "15", "14", "36", "26", "10", "25", "00", "20"
+    ];
+
+    const BASE_GRANJITA = [
+      "25", "04", "30", "23", "12", "25", "05", "22", "07", "35", "25", "31", "08", "30",
+      "19", "28", "0", "30", "30", "13", "06", "06", "05", "29", "19", "29", "31", "16",
+      "28", "24", "03", "35", "18", "16", "01", "31", "34", "06", "20", "24", "02", "28",
+      "16", "02", "05", "27", "02", "23", "27", "24", "17", "01", "33", "28", "13", "27",
+      "16", "32", "24", "28", "09", "10", "23", "14", "17", "21", "0", "05", "33", "22",
+      "09", "31", "36", "23", "20", "14", "27", "01", "19", "30", "26", "0", "27", "18",
+      "03", "27", "36", "11", "10", "13", "15", "20", "21", "12", "03", "06", "10", "24",
+      "12", "04", "05", "07", "04", "01", "28", "08", "18", "31", "30", "23", "14", "12",
+      "0", "20", "34", "12", "0", "06", "01", "26", "13", "13", "33", "03", "21", "31",
+      "15", "21", "11", "24", "0", "0", "05", "29", "01", "09", "23", "12", "0", "07",
+      "17", "25", "07", "35", "12", "28", "21", "07", "29", "04", "02", "16", "07", "32",
+      "01", "02", "31", "16", "27", "22", "15", "19", "09", "33", "15", "15", "26", "13",
+      "32", "04", "03", "33", "34", "05", "0", "08", "32", "06", "24", "12", "19", "02",
+      "0", "16", "24", "11", "32", "13", "19", "13", "15", "31", "35", "04", "08", "07",
+      "03", "35", "15", "23", "30", "17", "10", "18", "08", "04", "34", "17", "06", "08",
+      "08", "34", "02", "17", "32", "10", "30", "01", "25", "19", "18", "20", "17", "26",
+      "35", "23", "05", "06", "06", "23", "05", "09", "09", "36", "20", "32", "17", "28",
+      "19", "25", "27", "26", "11", "19", "15", "0", "10", "0", "09", "17", "0", "23",
+      "35", "31", "24", "18", "35", "21", "01", "07", "33", "0", "09", "29", "0", "10",
+      "08", "18", "10", "04", "10", "03", "32", "33", "30", "29", "27", "22", "29", "34",
+      "27", "05", "17", "13", "33", "10", "19", "35", "05", "27", "19", "33", "0", "18",
+      "02", "0", "14", "08", "18", "25", "06", "31", "10", "27", "24", "32", "18", "29",
+      "19", "31", "09", "14", "21", "0", "32", "16", "20", "0", "03", "29", "29", "10",
+      "22", "26", "21", "03", "02", "24", "25", "14", "23", "17", "31", "09", "16", "04",
+      "26", "06", "19", "07", "01", "26", "14", "07", "08", "29", "05", "07", "34", "33",
+      "32", "0", "35", "15", "31", "14", "12", "36", "21", "32", "22", "02", "21", "26",
+      "25", "17", "02", "19", "24", "26", "0", "33", "07", "08", "29", "34", "06", "18",
+      "24", "35", "03", "23", "0", "18", "34", "08", "31", "07", "11", "02", "17", "10",
+      "26", "30", "14", "20", "01", "36", "14", "32", "05", "11", "16", "14", "11", "27",
+      "21", "34", "27", "31", "06", "28", "25", "22", "09", "30", "28", "07", "26", "06",
+      "21", "10", "36", "09", "21", "01", "22", "25", "16", "22", "04", "35", "09", "20",
+      "09", "21", "32", "02", "02", "33", "03", "01", "13", "23", "21", "05", "0", "30",
+      "29", "36", "16", "23", "21", "07", "35", "28", "01", "22", "13", "0", "02", "07",
+      "13", "08", "36", "16", "11", "35", "26", "17", "17", "15", "31", "30", "03", "17",
+      "18", "0", "06", "17", "04", "11", "0", "25", "35", "36", "09", "06", "36", "32",
+      "20", "32", "16", "27", "19", "24", "17", "16", "31", "06", "09", "21", "31", "02",
+      "32", "0", "08", "17", "05", "25", "32", "0", "22", "0", "09", "28", "31", "11",
+      "02", "21", "15", "10", "34", "07", "35", "01", "24", "28", "25", "14", "11", "36",
+      "27", "09", "22", "01", "0", "0", "30", "13", "13", "22", "32", "33", "03", "11",
+      "05", "31", "06", "35", "29", "0", "05", "17", "09", "30", "32", "15", "19", "18",
+      "24", "03", "35", "24", "30", "28", "02", "0", "27", "07", "04", "24", "13", "26",
+      "28", "26", "18", "15", "29", "12", "0", "12", "03", "21", "07", "13", "16", "26",
+      "23", "31", "30", "22", "15", "0", "32", "04", "33", "00", "15", "02", "29"
+    ];
+
+    const BASE_RULETA = [
+      "12", "13", "03", "27", "09", "01", "35",
+      "23", "22", "11", "34", "18", "32", "09",
+      "35", "0", "21", "07", "0", "05", "30",
+      "29", "19", "26", "16", "29", "00", "06",
+      "30", "23", "20", "25", "06", "02", "19",
+      "21", "06", "18", "33", "15", "19", "21",
+      "27", "15", "27", "32", "08", "22", "26",
+      "34", "27", "02", "05", "00", "33", "10",
+      "20", "12", "06", "00", "23", "36", "31",
+      "03", "07", "14", "27", "02", "01", "15",
+      "26", "35", "15", "05", "14", "28", "14",
+      "13", "13", "03", "05", "23", "34", "33",
+      "03", "09", "06", "29", "20", "32", "08",
+      "09", "15", "18", "08", "11", "12", "00",
+      "17", "12", "25", "11", "30", "25", "09",
+      "05", "10", "34", "03", "28", "0", "23",
+      "32", "24", "10", "08", "13", "23", "14",
+      "16", "22", "08", "05", "14", "02", "03",
+      "01", "27", "03", "25", "29", "15", "25",
+      "14", "09", "32", "07", "09", "06", "12",
+      "21", "10", "12", "31", "08", "16", "22",
+      "12", "12", "14", "24", "08", "19", "00",
+      "31", "24", "26", "21", "28", "06", "29",
+      "07", "12", "35", "08", "22", "05", "03",
+      "01", "14", "16", "02", "10", "15", "34",
+      "18", "06", "20", "27", "30", "20", "19",
+      "32", "34", "0", "32", "01", "33", "07",
+      "05", "01", "09", "17", "35", "22", "33",
+      "29", "22", "31", "15", "29", "14", "35",
+      "34", "08", "06", "23", "33", "07", "18",
+      "16", "02", "34", "20", "14", "24", "16",
+      "20", "13", "12", "34", "13", "01", "09",
+      "15", "07", "24", "13", "15", "15", "01",
+      "32", "29", "33", "29", "13", "15", "29",
+      "22", "35", "25", "35", "27", "13", "23",
+      "05", "26", "10", "00", "09", "33", "11",
+      "03", "16", "17", "07", "16", "19", "36",
+      "31", "12", "30", "02", "24", "09", "12",
+      "11", "07", "15", "24", "0", "27", "03",
+      "01", "17", "35", "21", "26", "32", "22",
+      "25", "28", "03", "34", "29", "17", "21",
+      "20", "23", "19", "23", "00", "26", "32",
+      "34", "18", "32", "16", "20", "35", "13",
+      "06", "30", "06", "30", "23", "00", "35",
+      "08", "07", "05", "08", "20", "01", "02",
+      "01", "14", "26", "28", "29", "13", "14",
+      "20", "34", "21", "04", "12", "32",
+      "15", "28", "33", "01", "0", "19",
+      "24", "13", "24", "22", "26", "20",
+      "00", "09", "01", "06", "13", "07",
+      "30", "12", "20", "00", "08", "22",
+      "19", "19", "0", "12", "00", "18",
+      "33", "02", "15", "13", "19", "0",
+      "03", "25", "22", "30", "29", "23",
+      "28", "29", "02", "26", "27", "06"
+    ];
+
+    function getHoursForLot(lot) {
+      return lot === "ruleta" ? HOURS_RULETA : HOURS_8_TO_7;
+    }
+
+    function buildInitialDayMap() {
+      return {
+        "2026-11-21": {
+          lotto: {
+            "08:00 a. m.": "19", "09:00 a. m.": "33", "10:00 a. m.": "32", "11:00 a. m.": "31",
+            "12:00 p. m.": "15", "01:00 p. m.": "14", "02:00 p. m.": "36", "03:00 p. m.": "26",
+            "04:00 p. m.": "10", "05:00 p. m.": "25", "06:00 p. m.": "00", "07:00 p. m.": "20"
+          },
+          granjita: {
+            "08:00 a. m.": "31", "09:00 a. m.": "30", "10:00 a. m.": "22", "11:00 a. m.": "15",
+            "12:00 p. m.": "0", "01:00 p. m.": "32", "02:00 p. m.": "04", "03:00 p. m.": "33",
+            "04:00 p. m.": "00", "05:00 p. m.": "15", "06:00 p. m.": "02", "07:00 p. m.": "29"
+          },
+          ruleta: {
+            "09:00 a. m.": "01", "10:00 a. m.": "29", "11:00 a. m.": "14",
+            "12:00 p. m.": "32", "01:00 p. m.": "19", "02:00 p. m.": "07", "03:00 p. m.": "22",
+            "04:00 p. m.": "00", "05:00 p. m.": "23", "06:00 p. m.": "26", "07:00 p. m.": "27"
+          }
+        },
+        "2026-11-22": {
+          lotto: {},
+          granjita: {},
+          ruleta: {}
+        }
+      };
+    }
+
+    function loadInitialState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.history && parsed.days) {
+            return {
+              history: {
+                lotto: parsed.history.lotto || [...BASE_LOTTO],
+                granjita: parsed.history.granjita || [...BASE_GRANJITA],
+                ruleta: parsed.history.ruleta || [...BASE_RULETA]
+              },
+              days: parsed.days,
+              currentDate: parsed.currentDate || "2026-11-22",
+              lastMeta: parsed.lastMeta || { date: "2026-11-21", hour: "07:00 p. m.", code: "20", lot: "lotto" },
+              plays: Array.isArray(parsed.plays) ? parsed.plays : []
+            };
+          }
+        }
+      } catch (e) {}
+      return {
+        history: {
+          lotto: [...BASE_LOTTO],
+          granjita: [...BASE_GRANJITA],
+          ruleta: [...BASE_RULETA]
+        },
+        days: buildInitialDayMap(),
+        currentDate: "2026-11-22",
+        lastMeta: { date: "2026-11-21", hour: "07:00 p. m.", code: "20", lot: "lotto" },
+        plays: []
+      };
+    }
+
+    const loaded = loadInitialState();
+    const state = {
+      tab: "lotto",
+      currentDate: loaded.currentDate,
+      lastMeta: loaded.lastMeta,
+      history: loaded.history,
+      days: loaded.days,
+      plays: loaded.plays
+    };
+
+    const nameMap = Object.fromEntries(ANIMALS.map(a => [a.code, a.name]));
+
+    // Animales que ya salieron hoy en esa lotería (y fallback a últimos 8 si hay pocos hoy)
+    function getTodayAlreadyOutInLottery(lotKey) {
+      const todaySlots = state.days?.[state.currentDate]?.[lotKey] || {};
+      const outSet = new Set(Object.values(todaySlots).filter(Boolean));
+      const series = state.history[lotKey] || [];
+      series.slice(-6).forEach(c => outSet.add(c));
+      return outSet;
+    }
+
+    function populateHourSelect(lotKey) {
+      const hours = getHoursForLot(lotKey);
+      const hourSel = document.getElementById("hourSelect");
+      const prevHour = hourSel.value;
+      hourSel.innerHTML = hours.map(h => `<option value="${h}">${h}</option>`).join("");
+      hourSel.value = hours.includes(prevHour) ? prevHour : hours[0];
+    }
+
+    function syncPlayHoursWithLottery() {
+      const playLot = document.getElementById("playLotteryInput").value;
+      const hours = playLot === "ruleta" ? HOURS_RULETA : HOURS_8_TO_7;
+      const playSel = document.getElementById("playHourInput");
+      const prev = playSel.value;
+      playSel.innerHTML = hours.map(h => `<option value="${h}">${h}</option>`).join("");
+      playSel.value = hours.includes(prev) ? prev : "09:00 a. m.";
+    }
+
+    function persistAll() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          history: state.history,
+          days: state.days,
+          currentDate: state.currentDate,
+          lastMeta: state.lastMeta,
+          plays: state.plays
+        }));
+        document.getElementById("saveStatus").textContent = "Guardado automáticamente en este dispositivo.";
+      } catch (e) {}
+    }
+
+    function ensureDayEntry(dateStr, lot) {
+      if (!state.days[dateStr]) state.days[dateStr] = { lotto: {}, granjita: {}, ruleta: {} };
+      if (!state.days[dateStr][lot]) state.days[dateStr][lot] = {};
+      if (lot === "ruleta") delete state.days[dateStr].ruleta["08:00 a. m."];
+      return state.days[dateStr][lot];
+    }
+
+    function shiftDate(dateStr, deltaDays) {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      const dt = new Date(y, m - 1, d + deltaDays);
+      return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+    }
+
+    function stepDay(delta) {
+      state.currentDate = shiftDate(state.currentDate, delta);
+      document.getElementById("datePicker").value = state.currentDate;
+      const lotKey = state.tab === "ligadas" ? "lotto" : state.tab;
+      document.getElementById("hourSelect").value = getHoursForLot(lotKey)[0];
+      persistAll();
+      renderAll();
+    }
+
+    function onDateChange() {
+      const val = document.getElementById("datePicker").value;
+      if (val) {
+        state.currentDate = val;
+        const lotKey = state.tab === "ligadas" ? "lotto" : state.tab;
+        document.getElementById("hourSelect").value = getHoursForLot(lotKey)[0];
+        persistAll();
+        renderAll();
+      }
+    }
+
+    function selectSlotHour(hr) {
+      document.getElementById("hourSelect").value = hr;
+      renderAll();
+    }
+
+    function normalizeToken(tok) {
+      const clean = tok.trim().toLowerCase();
+      if (!clean) return null;
+      if (clean === "00") return "00";
+      if (/^\d{1,2}$/.test(clean)) {
+        const n = parseInt(clean, 10);
+        if (n === 0) return "0";
+        if (n >= 1 && n <= 36) return String(n).padStart(2, "0");
+      }
+      const stripped = clean.replace(/^\d{1,2}\s+/, "");
+      return NAME_TO_CODE[stripped] || NAME_TO_CODE[clean] || null;
+    }
+
+    function parseCodes(text) {
+      return text
+        .split(/[\n,;]+/)
+        .flatMap(chunk => {
+          const direct = normalizeToken(chunk);
+          if (direct) return [direct];
+          return chunk.trim().split(/\s+/).map(normalizeToken).filter(Boolean);
+        });
+    }
+
+    function advanceHourSelect(lotKey) {
+      const hours = getHoursForLot(lotKey);
+      const sel = document.getElementById("hourSelect");
+      const idx = hours.indexOf(sel.value);
+      if (idx !== -1) sel.value = hours[(idx + 1) % hours.length];
+    }
+
+    function computeScoresFromSeries(series) {
+      const closest5 = series.slice(-5);
+      const scores = {};
+      for (let i = 0; i < series.length - 1; i++) {
+        const cur = series[i];
+        const nxt = series[i + 1];
+        const idx = closest5.indexOf(cur);
+        if (idx !== -1) {
+          const recencyWeight = 1 + (idx + 1) * 0.45;
+          scores[nxt] = (scores[nxt] || 0) + recencyWeight;
+        }
+      }
+      series.forEach(c => {
+        scores[c] = (scores[c] || 0) + 0.15;
+      });
+      return scores;
+    }
+
+    function computeMostProbableAnimal(series) {
+      const scores = computeScoresFromSeries(series);
+      return Object.entries(scores).sort((a, b) => b[1] - a[1])[0] || ["20", 1];
+    }
+
+    function pickNextDistinctAfter(series, targetCode, scoresMap, usedSet) {
+      const afterCounts = {};
+      for (let i = 0; i < series.length - 1; i++) {
+        if (series[i] === targetCode) {
+          const nxt = series[i + 1];
+          if (!usedSet.has(nxt)) {
+            afterCounts[nxt] = (afterCounts[nxt] || 0) + 1;
+          }
+        }
+      }
+      const rankedAfter = Object.entries(afterCounts)
+        .sort((a, b) => b[1] - a[1] || (scoresMap[b[0]] || 0) - (scoresMap[a[0]] || 0));
+      if (rankedAfter.length) return rankedAfter[0];
+
+      const rankedGlobal = Object.entries(scoresMap)
+        .filter(([c]) => !usedSet.has(c))
+        .sort((a, b) => b[1] - a[1]);
+      if (rankedGlobal.length) return rankedGlobal[0];
+
+      const fallback = ANIMALS.find(a => !usedSet.has(a.code));
+      return [fallback ? fallback.code : "05", 1];
+    }
+
+    function computeTripleta1(series, lotKey) {
+      const scores = computeScoresFromSeries(series);
+      const alreadyToday = getTodayAlreadyOutInLottery(lotKey);
+      const used = new Set();
+
+      // Prioriza los de mayor puntaje que no hayan salido hoy/reciente en esta lotería
+      const primary = Object.entries(scores)
+        .filter(([c]) => !alreadyToday.has(c))
+        .sort((a, b) => b[1] - a[1]);
+
+      const picked = [];
+      for (const [c, pts] of primary) {
+        if (picked.length === 3) break;
+        if (!used.has(c)) {
+          picked.push([c, pts]);
+          used.add(c);
+        }
+      }
+
+      if (picked.length < 3) {
+        const secondary = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+        for (const [c, pts] of secondary) {
+          if (picked.length === 3) break;
+          if (!used.has(c)) {
+            picked.push([c, pts]);
+            used.add(c);
+          }
+        }
+      }
+
+      return picked;
+    }
+
+    function computeTripleta2Chain(series, lotKey, topPickCode) {
+      const scores = computeScoresFromSeries(series);
+      const alreadyToday = getTodayAlreadyOutInLottery(lotKey);
+      const used = new Set();
+
+      // Primer eslabón: el más probable si no salió hoy/reciente; si ya salió, el mejor libre tras él
+      let firstCode = topPickCode;
+      if (alreadyToday.has(firstCode)) {
+        const [altFirst] = pickNextDistinctAfter(series, topPickCode, scores, used);
+        firstCode = altFirst;
+      }
+      used.add(firstCode);
+      const w1 = Math.max(1, scores[firstCode] || 1);
+
+      const [secondCode, w2] = pickNextDistinctAfter(series, firstCode, scores, used);
+      used.add(secondCode);
+
+      const [thirdCode, w3] = pickNextDistinctAfter(series, secondCode, scores, used);
+      used.add(thirdCode);
+
+      return [
+        [firstCode, w1],
+        [secondCode, Math.max(1, w2)],
+        [thirdCode, Math.max(1, w3)]
+      ];
+    }
+
+    // Quiniela de 6: sin excluir nada, ligando las 3 loterías
+    function computeLinkedQuiniela6() {
+      const sL = computeScoresFromSeries(state.history.lotto);
+      const sG = computeScoresFromSeries(state.history.granjita);
+      const sR = computeScoresFromSeries(state.history.ruleta);
+      const combined = {};
+      ANIMALS.forEach(a => {
+        combined[a.code] = (sL[a.code] || 0) + (sG[a.code] || 0) + (sR[a.code] || 0);
+      });
+      return Object.entries(combined).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    }
+
+    function addUserPlay(customCodes = null, customHour = null, customLot = null) {
+      const codes = customCodes || parseCodes(document.getElementById("playAnimalsInput").value);
+      const hour = customHour || document.getElementById("playHourInput").value;
+      const lot = customLot || document.getElementById("playLotteryInput").value;
+      if (!codes.length) return;
+      state.plays.unshift({
+        id: Date.now(),
+        date: state.currentDate,
+        hour,
+        lottery: lot,
+        codes,
+        hits: []
+      });
+      if (!customCodes) document.getElementById("playAnimalsInput").value = "";
+      evaluatePlaysAgainstCurrentDay();
+      persistAll();
+      renderAll();
+    }
+
+    function loadCurrentTripletaToPlay(which) {
+      const lotKey = state.tab === "ligadas" ? "lotto" : state.tab;
+      const series = state.history[lotKey];
+      const topPick = computeMostProbableAnimal(series);
+      const codes = which === 1
+        ? computeTripleta1(series, lotKey).map(([c]) => c)
+        : computeTripleta2Chain(series, lotKey, topPick[0]).map(([c]) => c);
+      document.getElementById("playLotteryInput").value = lotKey;
+      syncPlayHoursWithLottery();
+      addUserPlay(codes, document.getElementById("playHourInput").value, lotKey);
+    }
+
+    function loadQuinielaToPlay() {
+      const q6 = computeLinkedQuiniela6().map(([c]) => c);
+      const hr = QUINIELA_WINDOW_HOURS.has(document.getElementById("playHourInput").value)
+        ? document.getElementById("playHourInput").value
+        : "09:00 a. m.";
+      document.getElementById("playLotteryInput").value = "quiniela_3";
+      syncPlayHoursWithLottery();
+      addUserPlay(q6, hr, "quiniela_3");
+    }
+
+    function clearAllPlays() {
+      state.plays = [];
+      persistAll();
+      renderAll();
+    }
+
+    function evaluatePlaysAgainstCurrentDay() {
+      const dayData = state.days[state.currentDate] || { lotto: {}, granjita: {}, ruleta: {} };
+      state.plays.forEach(play => {
+        const hitSet = new Set(play.hits || []);
+        HOURS_8_TO_7.forEach(hr => {
+          if (play.lottery === "quiniela_3") {
+            if (!QUINIELA_WINDOW_HOURS.has(hr)) return;
+            ["lotto", "granjita", "ruleta"].forEach(l => {
+              const allowed = getHoursForLot(l);
+              if (!allowed.includes(hr)) return;
+              const c = dayData[l]?.[hr];
+              if (c && play.codes.includes(c)) hitSet.add(`${c}@${l}@${hr}`);
+            });
+          } else {
+            const allowed = getHoursForLot(play.lottery);
+            if (!allowed.includes(hr)) return;
+            const c = dayData[play.lottery]?.[hr];
+            if (c && play.codes.includes(c)) hitSet.add(`${c}@${play.lottery}@${hr}`);
+          }
+        });
+        play.hits = Array.from(hitSet);
+      });
+    }
+
+    function renderUserPlays() {
+      evaluatePlaysAgainstCurrentDay();
+      const el = document.getElementById("userPlaysList");
+      if (!state.plays.length) {
+        el.innerHTML = `<div class="muted" style="margin-top:6px;">Sin jugadas registradas todavía.</div>`;
+        return;
+      }
+
+      el.innerHTML = state.plays.map(p => {
+        const matchedCodes = Array.from(new Set(p.hits.map(h => h.split("@")[0])));
+        const hitDetails = p.hits.map(h => {
+          const [c, l, hr] = h.split("@");
+          return `${c} ${nameMap[c]} (${LOT_LABELS[l] || l}, ${hr})`;
+        });
+        const isQuiniela = p.lottery === "quiniela_3";
+        const wonAll6 = isQuiniela && matchedCodes.length >= 6;
+        const hitAny = matchedCodes.length > 0;
+
+        let verdictText = "";
+        if (isQuiniela) {
+          verdictText = wonAll6
+            ? "¡PEGÓ LOS 6 ANIMALES DE LA QUINIELA!"
+            : hitAny
+              ? `Pegó ${matchedCodes.length} de 6 (${hitDetails.join(" · ")}) — faltan ${6 - matchedCodes.length} para completar.`
+              : "Aún no pegó ninguno de los 6 animales en el horario de 9:00 a. m. a 1:00 p. m.";
+        } else {
+          verdictText = hitAny
+            ? `¡PEGÓ! Acertó ${matchedCodes.length} de ${p.codes.length}: ${hitDetails.join(" · ")}`
+            : "No pegó en los resultados cargados hasta ahora.";
+        }
+
+        return `
+          <div class="play-log-item ${hitAny ? "won" : ""}">
+            <div><strong>Jugada (${p.hour})</strong> · ${LOT_LABELS[p.lottery] || p.lottery} · ${p.date}</div>
+            <div style="margin:4px 0;"><strong>Jugó:</strong> ${p.codes.map(c => `${c} ${nameMap[c]}`).join(", ")}</div>
+            <div><strong>Estado:</strong> ${verdictText}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function setTab(nextTab) {
+      state.tab = nextTab;
+      document.getElementById("btnLotto").classList.toggle("active", nextTab === "lotto");
+      document.getElementById("btnGranjita").classList.toggle("active", nextTab === "granjita");
+      document.getElementById("btnRuleta").classList.toggle("active", nextTab === "ruleta");
+      document.getElementById("btnLigadas").classList.toggle("active", nextTab === "ligadas");
+
+      const isLinkedTab = nextTab === "ligadas";
+      document.getElementById("singleLotteryCard").style.display = isLinkedTab ? "none" : "block";
+      document.getElementById("manualPickerCard").style.display = isLinkedTab ? "none" : "block";
+      document.getElementById("individualLotterySection").style.display = isLinkedTab ? "none" : "block";
+      document.getElementById("linkedQuinielaCard").style.display = "block";
+
+      const lotKey = isLinkedTab ? "lotto" : nextTab;
+      populateHourSelect(lotKey);
+      document.getElementById("playLotteryInput").value = isLinkedTab ? "quiniela_3" : nextTab;
+      syncPlayHoursWithLottery();
+      renderAll();
+    }
+
+    function selectAnimal(code) {
+      const lotKey = state.tab === "ligadas" ? "lotto" : state.tab;
+      const registeredHour = document.getElementById("hourSelect").value;
+      const daySlots = ensureDayEntry(state.currentDate, lotKey);
+      daySlots[registeredHour] = code;
+
+      state.history[lotKey].push(code);
+      state.lastMeta = {
+        date: state.currentDate,
+        hour: registeredHour,
+        code,
+        lot: lotKey
+      };
+      advanceHourSelect(lotKey);
+      evaluatePlaysAgainstCurrentDay();
+      persistAll();
+      renderAll();
+    }
+
+    function undoLast() {
+      const lotKey = state.tab === "ligadas" ? "lotto" : state.tab;
+      const arr = state.history[lotKey];
+      if (arr.length > 1) {
+        arr.pop();
+        state.lastMeta.code = arr[arr.length - 1];
+        persistAll();
+      }
+      renderAll();
+    }
+
+    function clearCurrentLottery() {
+      const lotKey = state.tab === "ligadas" ? "lotto" : state.tab;
+      const keep = state.history[lotKey][state.history[lotKey].length - 1] || "20";
+      state.history[lotKey] = [keep];
+      if (state.days[state.currentDate]) state.days[state.currentDate][lotKey] = {};
+      persistAll();
+      renderAll();
+    }
+
+    function resetSavedHistory() {
+      localStorage.removeItem(STORAGE_KEY);
+      state.history = {
+        lotto: [...BASE_LOTTO],
+        granjita: [...BASE_GRANJITA],
+        ruleta: [...BASE_RULETA]
+      };
+      state.days = buildInitialDayMap();
+      state.currentDate = "2026-11-22";
+      state.lastMeta = { date: "2026-11-21", hour: "07:00 p. m.", code: "20", lot: "lotto" };
+      state.plays = [];
+      document.getElementById("datePicker").value = state.currentDate;
+      populateHourSelect(state.tab === "ligadas" ? "lotto" : state.tab);
+      syncPlayHoursWithLottery();
+      document.getElementById("saveStatus").textContent = "Base restablecida: tripletas con 3 animales distintos y sin repetir los ya salidos hoy.";
+      renderAll();
+    }
+
+    function copyCurrentView() {
+      if (state.tab === "ligadas") {
+        const q6 = Array.from(document.querySelectorAll("#quiniela6Pills .pill")).map(el => el.textContent).join(", ");
+        navigator.clipboard?.writeText(`Quiniela 3 ligadas (9am–1pm): ${q6}`);
+        return;
+      }
+      const prob = document.getElementById("mostProbValue").textContent;
+      const t1 = Array.from(document.querySelectorAll("#tripleta1Pills .pill")).map(el => el.textContent).join(", ");
+      const t2 = Array.from(document.querySelectorAll("#tripleta2Pills .pill")).map(el => el.textContent).join(" → ");
+      navigator.clipboard?.writeText(`${LOT_LABELS[state.tab]} | Más probable: ${prob} | Tripleta 1: ${t1} | Tripleta 2: ${t2}`);
+    }
+
+    function renderDaySlots() {
+      const lotKey = state.tab === "ligadas" ? "lotto" : state.tab;
+      const hours = getHoursForLot(lotKey);
+      const picker = document.getElementById("datePicker");
+      if (picker.value !== state.currentDate) picker.value = state.currentDate;
+
+      const selectedHour = document.getElementById("hourSelect").value;
+      document.getElementById("targetSlotLabel").textContent = `${selectedHour} · ${state.currentDate} (${LOT_LABELS[lotKey]})`;
+
+      const daySlots = ensureDayEntry(state.currentDate, lotKey);
+      const filled = hours.filter(h => Boolean(daySlots[h])).length;
+      document.getElementById("daySummaryText").textContent =
+        `Día ${state.currentDate} · ${LOT_LABELS[lotKey]}: ${filled}/${hours.length} horas cargadas (${hours[0]} a ${hours[hours.length - 1]}).`;
+
+      document.getElementById("daySlotsGrid").innerHTML = hours.map(hr => {
+        const c = daySlots[hr];
+        const label = c ? `${c} ${nameMap[c] || ""}` : "Sin cargar";
+        const activeClass = hr === selectedHour ? "active-slot" : "";
+        return `<button class="slot-chip ${activeClass}" onclick="selectSlotHour('${hr}')">
+          <span class="slot-hour">${hr}</span>
+          <span class="slot-val">${label}</span>
+        </button>`;
+      }).join("");
+    }
+
+    function renderAll() {
+      renderDaySlots();
+
+      const lotKey = state.tab === "ligadas" ? "lotto" : state.tab;
+      const seq = state.history[lotKey];
+      const lastCode = seq[seq.length - 1] || "20";
+
+      document.getElementById("lastResultText").textContent =
+        `Último en ${LOT_LABELS[lotKey]}: ${lastCode} ${nameMap[lastCode] || ""} (${state.lastMeta.date} · ${state.lastMeta.hour})`;
+      document.getElementById("histStats").textContent =
+        `Lotto: ${state.history.lotto.length} | Granjita: ${state.history.granjita.length} | Ruleta: ${state.history.ruleta.length}`;
+
+      const closest5 = seq.slice(-5);
+      document.getElementById("recentChainText").textContent =
+        `Últimos 5 resultados cercanos: ${closest5.map(c => `${c} ${nameMap[c]}`).join(" → ")}`;
+
+      const topPick = computeMostProbableAnimal(seq);
+      document.getElementById("mostProbTitle").textContent =
+        `Animal más probable en salir (${LOT_LABELS[lotKey]}):`;
+      document.getElementById("mostProbValue").textContent = topPick
+        ? `${topPick[0]} ${nameMap[topPick[0]]} (puntaje ${topPick[1].toFixed(1).replace(/\.0$/, "")})`
+        : "—";
+
+      const t1 = computeTripleta1(seq, lotKey);
+      document.getElementById("tripleta1Pills").innerHTML = t1
+        .map(([c, pts], i) => `<span class="pill">#${i + 1} ${c} ${nameMap[c]} (${pts.toFixed(1).replace(/\.0$/, "")})</span>`)
+        .join("");
+
+      const t2 = computeTripleta2Chain(seq, lotKey, topPick[0]);
+      document.getElementById("chainDesc").textContent =
+        `Cadena: ${t2[0][0]} ${nameMap[t2[0][0]]} llama a ${t2[1][0]} ${nameMap[t2[1][0]]} y este llama a ${t2[2][0]} ${nameMap[t2[2][0]]}.`;
+      document.getElementById("tripleta2Pills").innerHTML = t2
+        .map(([c], i) => `<span class="pill c-pill">#${i + 1} ${c} ${nameMap[c]}</span>`)
+        .join("");
+
+      const q6 = computeLinkedQuiniela6();
+      const selectedHour = document.getElementById("hourSelect").value;
+      const inWindow = QUINIELA_WINDOW_HOURS.has(selectedHour);
+      document.getElementById("quinielaStatusNote").textContent = inWindow
+        ? `Franja activa (${selectedHour} dentro de 9:00 a. m. – 1:00 p. m.) · Loterías ligadas (sin excluir): Lotto + Granjita + Ruleta.`
+        : `Franja de quiniela: 9:00 a. m. a 1:00 p. m. (hora seleccionada: ${selectedHour}). Selección combinada de las 3 loterías (sin excluir):`;
+      document.getElementById("quiniela6Pills").innerHTML = q6
+        .map(([c, pts], i) => `<span class="pill q-pill">#${i + 1} ${c} ${nameMap[c]} (${pts.toFixed(1).replace(/\.0$/, "")})</span>`)
+        .join("");
+
+      renderUserPlays();
+      renderGrid();
+    }
+
+    function renderGrid() {
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
+      const filtered = ANIMALS.filter(a => !q || a.code.toLowerCase().includes(q) || a.name.toLowerCase().includes(q));
+      document.getElementById("animalsGrid").innerHTML = filtered.map(a => `
+        <button class="animal-btn" onclick="selectAnimal('${a.code}')">
+          <span class="animal-num">${a.code}</span>
+          <span class="animal-name">${a.name}</span>
+        </button>
+      `).join("");
+    }
+
+    populateHourSelect("lotto");
+    syncPlayHoursWithLottery();
+    document.getElementById("linkedQuinielaCard").style.display = "block";
+    renderAll();
+  </script>
+</body>
+</html>
