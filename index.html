@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pronósticos & Estadísticas de Animalitos</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #131c33;
+      --card-2: #192442;
+      --text: #eef2ff;
+      --muted: #94a3b8;
+      --accent: #22c55e;
+      --accent-2: #38bdf8;
+      --warn: #f59e0b;
+      --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 16px; line-height: 1.45; }
+    .container { max-width: 1050px; margin: 0 auto; }
+    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+    h1 { font-size: 1.35rem; }
+    .subtitle { color: var(--muted); font-size: 0.85rem; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .tab {
+      background: var(--card); color: var(--text); border: 1px solid var(--border);
+      padding: 9px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+    }
+    .tab.active { background: var(--accent); color: #052e16; border-color: transparent; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 16px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 15px; margin-bottom: 14px;
+    }
+    .card h2 { font-size: 1rem; margin-bottom: 10px; color: var(--accent-2); }
+    .predict-list { display: grid; gap: 8px; }
+    .predict-item {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--card-2); padding: 10px 12px; border-radius: 10px;
+    }
+    .badge {
+      background: rgba(34,197,94,0.16); color: #86efac;
+      padding: 3px 8px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;
+    }
+    select, input, button {
+      background: var(--card-2); color: var(--text); border: 1px solid var(--border);
+      padding: 8px 10px; border-radius: 8px; font-size: 0.9rem;
+    }
+    button { cursor: pointer; }
+    button.primary { background: var(--accent-2); color: #082f49; font-weight: 700; border: none; }
+    .bars { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; align-items: end; height: 120px; margin-top: 10px; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 4px; }
+    .bar { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.25s; }
+    .bar-lbl { font-size: 0.68rem; color: var(--muted); }
+    .franjas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .franja-box { background: var(--card-2); padding: 10px; border-radius: 10px; text-align: center; }
+    .franja-num { font-size: 1.2rem; font-weight: 700; color: var(--warn); }
+    .franja-sub { font-size: 0.72rem; color: var(--muted); }
+    .row-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+    textarea {
+      width: 100%; min-height: 110px; background: var(--card-2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Panel de Animalitos — Pronósticos e Historial</h1>
+        <div class="subtitle">Sorteos de 8:00 AM a 7:00 PM · Lotto Activo · Ruleta Activa · La Granjita</div>
+      </div>
+      <div class="row-controls">
+        <label for="franjaSelect">Franja pronóstico:</label>
+        <select id="franjaSelect" onchange="render()">
+          <option value="all">Todas las horas</option>
+          <option value="manana">Mañana (8am - 11am)</option>
+          <option value="tarde">Tarde (12pm - 4pm)</option>
+          <option value="noche">Noche (5pm - 7pm)</option>
+        </select>
+      </div>
+    </header>
+
+    <div class="tabs" id="loteriaTabs"></div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Top Pronósticos Sugeridos</h2>
+        <div class="subtitle" style="margin-bottom:10px;">Ponderación por frecuencia general y franja horaria.</div>
+        <div class="predict-list" id="pronosticosBox"></div>
+      </div>
+
+      <div class="card">
+        <h2>Estadística por Animal</h2>
+        <div class="row-controls">
+          <select id="animalSelect" onchange="renderAnimalStats()"></select>
+          <span id="resumenAnimal" class="subtitle"></span>
+        </div>
+        <div class="bars" id="horasBars"></div>
+        <div class
