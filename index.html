@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bárbaros Stats · Pronósticos y Estadísticas de Animalitos</title>
+  <style>
+    :root {
+      --bg: #070b14;
+      --bg-grad: radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 42%),
+                 radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 45%),
+                 #070b14;
+      --card: rgba(17, 25, 46, 0.92);
+      --card-2: rgba(24, 35, 64, 0.95);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.15);
+      --accent-2: #38bdf8;
+      --accent-2-soft: rgba(56, 189, 248, 0.15);
+      --warn: #f59e0b;
+      --border: rgba(148, 163, 184, 0.14);
+      --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Inter", system-ui, -apple-system, sans-serif; }
+
+    body {
+      background: var(--bg-grad);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 18px 14px 36px;
+      line-height: 1.45;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .brand-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #86efac;
+      background: var(--accent-soft);
+      border: 1px solid rgba(34, 197, 94, 0.28);
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+
+    h1 { font-size: 1.38rem; font-weight: 800; letter-spacing: -0.02em; }
+    .subtitle { color: var(--muted); font-size: 0.84rem; margin-top: 2px; }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: all 0.18s ease;
+    }
+
+    .tab:hover { border-color: rgba(56, 189, 248, 0.45); transform: translateY(-1px); }
+    .tab.active {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #04210f;
+      border-color: transparent;
+      box-shadow: 0 8px 20px rgba(34, 197, 94, 0.28);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .grid .card { margin-bottom: 0; }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .card h2 {
+      font-size: 1.03rem;
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+
+    .pill-info {
+      font-size: 0.75rem;
+      color: var(--accent-2);
+      background: var(--accent-2-soft);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .predict-list { display: grid; gap: 10px; }
+
+    .predict-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      padding: 11px 14px;
+      border-radius: 13px;
+    }
+
+    .predict-rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      background: var(--accent-2-soft);
+      color: var(--accent-2);
+      font-weight: 800;
+      font-size: 0.8rem;
+      margin-right: 8px;
+    }
+
+    .badge {
+      background: var(--accent-soft);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    select, input, button {
+      background: var(--card-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.16s ease;
+    }
+
+    button:hover { border-color: rgba(148, 163, 184, 0.35); }
+
+    button.primary {
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      color: #041b2b;
+      font-weight: 800;
+      border: none;
+      box-shadow: 0 6px 16px rgba(56, 189, 248, 0.25);
+    }
+
+    .bars {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 6px;
+      align-items: end;
+      height: 132px;
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 8px 8px;
+      margin-top: 10px;
+    }
+
+    .bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      gap: 5px;
+    }
+
+    .bar {
+      width: 100%;
+      max-width: 20px;
+      background: linear-gradient(180deg, #4ade80, #16a34a);
+      border-radius: 6px 6px 2px 2px;
+      min-height: 5px;
+      transition: height 0.25s ease;
+    }
+
+    .bar-lbl { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
+
+    .franjas {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .franja-box {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      padding: 11px 8px;
+      border-radius: 13px;
+      text-align: center;
+    }
+
+    .franja-num { font-size: 1.25rem; font-weight: 800; color: var(--warn); }
+    .franja-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    .row-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 118px;
+      background: var(--card-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 12px;
+      font-size: 0.82rem;
+      resize: vertical;
+    }
+
+    .status-bar {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: #86efac;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <div class="brand-tag">8:00 AM – 7:00 PM · Análisis Histórico</div>
+        <h1>Pronósticos & Estadísticas de Animalitos</h1>
+        <div class="subtitle">Lotto Activo · Ruleta Activa · La Granjita</div>
+      </div>
+      <div class="row-controls" style="margin-bottom:0;">
+        <label for="franjaSelect" class="subtitle" style="margin:0;">Franja:</label>
+        <select id="franjaSelect" onchange="render()">
+          <option value="all">Todas las horas</option>
+          <option value="manana">Mañana (8am - 11am)</option>
+          <option value="tarde">Tarde (12pm - 4pm)</option>
+          <option value="noche">Noche (5pm - 7pm)</option>
+        </select>
+      </div>
+    </header>
+
+    <div class="tabs" id="loteriaTabs"></div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-head">
+          <h2>Top Pronósticos Sugeridos</h2>
+          <span class="pill-info" id="totalRegistrosBadge">0 sorteos</span>
+        </div>
+        <div class="subtitle" style="margin-bottom:12px;">Ponderación por frecuencia en la franja seleccionada y frecuencia general.</div>
+        <div class="predict-list" id="pronosticosBox"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Estadística por Animal</h2>
+          <span id="resumenAnimal" class="pill-info">-</span>
+        </div>
+        <div class="row-controls">
+          <select id="animalSelect" onchange="renderAnimalStats()" style="flex:1; min-width:170px;"></select>
+        </div>
+        <div class="bars" id="horasBars"></div>
+        <div class="franjas" id="franjasBox"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Agregar / Exportar Historial (JSON)</h2>
+        <span class="pill-info">Auto-limpieza activada</span>
+      </div>
+      <div class="subtitle" style="margin-bottom:10px;">
+        Pega la tanda de resultados y toca <strong>Agregar y limpiar</strong> para sumarla al historial y vaciar la caja automáticamente.
+      </div>
+      <textarea id="jsonInput" placeholder='Pega aquí el JSON de la semana...'></textarea>
+      <div class="row-controls" style="margin-top:10px;">
+        <button class="primary" onclick="agregarJson()">Agregar y limpiar</button>
+        <button onclick="reemplazarJson()">Reemplazar todo</button>
+        <button onclick="copiarJson()">Copiar historial completo</button>
+        <button onclick="limpiarCaja()">Limpiar caja</button>
+      </div>
+      <div id="estadoJson" class="status-bar"></div>
+    </div>
+  </div>
+
+  <script>
+    const HORAS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+    const LOTERIAS = [
+      { id: "lotto", nombre: "Lotto Activo" },
+      { id: "ruleta", nombre: "Ruleta Activa" },
+      { id: "granjita", nombre: "La Granjita" }
+    ];
+    const STORAGE_KEY = "animalitos_historial_v1";
+
+    const historialInicial = [
+      { loteria: "lotto", fecha: "2025-12-01", hora: 8, numero: "07", animal: "Pescado" }
+    ];
+
+    let historial = cargarDesdeStorage();
+    let loteriaActual = "lotto";
+
+    function cargarDesdeStorage() {
+      try {
+        const guardado = localStorage.getItem(STORAGE_KEY);
+        if (guardado) {
+          const parsed = JSON.parse(guardado);
+          if (Array.isArray(parsed) && parsed.length) return parsed;
+        }
+      } catch (e) {}
+      return [...historialInicial];
+    }
+
+    function guardarEnStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(historial));
+      } catch (e) {}
+    }
+
+    function parsearEntradaFlexible(texto) {
+      let limpio = texto.trim();
+      if (!limpio) throw new Error("La caja está vacía.");
+      if (!limpio.startsWith("[")) {
+        limpio = "[" + limpio.replace(/,\s*$/, "") + "]";
+      }
+      const parsed = JSON.parse(limpio);
+      if (!Array.isArray(parsed)) throw new Error("Debe contener registros JSON.");
+      return parsed;
+    }
+
+    function claveSorteo(r) {
+      return `${r.loteria}|${r.fecha}|${Number(r.hora)}`;
+    }
+
+    function agregarJson() {
+      const box = document.getElementById("jsonInput");
+      const estado = document.getElementById("estadoJson");
+      try {
+        const nuevos = parsearEntradaFlexible(box.value);
+        const existentes = new Set(historial.map(claveSorteo));
+        let agregados = 0;
+
+        nuevos.forEach(item => {
+          if (item && item.loteria && item.fecha && item.hora !== undefined && item.animal) {
+            const reg = {
+              loteria: String(item.loteria).toLowerCase().trim(),
+              fecha: String(item.fecha).trim(),
+              hora: Number(item.hora),
+              numero: item.numero ? String(item.numero).trim() : "",
+              animal: String(item.animal).trim()
+            };
+            const k = claveSorteo(reg);
+            if (!existentes.has(k)) {
+              existentes.add(k);
+              historial.push(reg);
+              agregados++;
+            }
+          }
+        });
+
+        guardarEnStorage();
+        box.value = "";
+        render();
+        estado.textContent = `Se agregaron ${agregados} sorteo(s) nuevo(s). Total acumulado: ${historial.length}.`;
+      } catch (e) {
+        estado.textContent = "Error al leer JSON: " + e.message;
+      }
+    }
+
+    function reemplazarJson() {
+      const box = document.getElementById("jsonInput");
+      const estado = document.getElementById("estadoJson");
+      try {
+        const nuevos = parsearEntradaFlexible(box.value);
+        historial = nuevos;
+        guardarEnStorage();
+        box.value = "";
+        render();
+        estado.textContent = `Historial reemplazado. Total actual: ${historial.length} sorteo(s).`;
+      } catch (e) {
+        estado.textContent = "Error al leer JSON: " + e.message;
+      }
+    }
+
+    function copiarJson() {
+      navigator.clipboard?.writeText(JSON.stringify(historial, null, 2));
+      document.getElementById("estadoJson").textContent = `Historial completo (${historial.length} registros) copiado al portapapeles.`;
+    }
+
+    function limpiarCaja() {
+      document.getElementById("jsonInput").value = "";
+      document.getElementById("estadoJson").textContent = "Caja limpiada.";
+    }
+
+    function enFranja(hora, franja) {
+      if (franja === "manana") return hora >= 8 && hora <= 11;
+      if (franja === "tarde") return hora >= 12 && hora <= 16;
+      if (franja === "noche") return hora >= 17 && hora <= 19;
+      return true;
+    }
+
+    function fmtHora(h) {
+      if (h === 12) return "12p";
+      return h > 12 ? `${h - 12}p` : `${h}a`;
+    }
+
+    function renderTabs() {
+      const box = document.getElementById("loteriaTabs");
+      box.innerHTML = "";
+      LOTERIAS.forEach(l => {
+        const btn = document.createElement("button");
+        btn.className = "tab" + (l.id === loteriaActual ? " active" : "");
+        btn.textContent = l.nombre;
+        btn.onclick = () => { loteriaActual = l.id; render(); };
+        box.appendChild(btn);
+      });
+    }
+
+    function render() {
+      renderTabs();
+      const datos = historial.filter(r => r.loteria === loteriaActual);
+      const franja = document.getElementById("franjaSelect").value;
+      document.getElementById("totalRegistrosBadge").textContent = `${datos.length} sorteos`;
+
+      const animalesMap = new Map();
+      datos.forEach(r => {
+        const key = `${r.numero || ""} ${r.animal}`.trim();
+        if (!animalesMap.has(key)) {
+          animalesMap.set(key, { key, total: 0, franjaCount: 0, ultimaFecha: r.fecha, ultimaHora: r.hora });
+        }
+        const item = animalesMap.get(key);
+        item.total += 1;
+        if (enFranja(r.hora, franja)) item.franjaCount += 1;
+        if (`${r.fecha} ${String(r.hora).padStart(2, "0")}` > `${item.ultimaFecha} ${String(item.ultimaHora).padStart(2, "0")}`) {
+          item.ultimaFecha = r.fecha;
+          item.ultimaHora = r.hora;
+        }
+      });
+
+      const lista = Array.from(animalesMap.values()).map(a => {
+        const score = (a.franjaCount * 2.2) + (a.total * 1.0);
+        return { ...a, score };
+      }).sort((a, b) => b.score - a.score);
+
+      const pronBox = document.getElementById("pronosticosBox");
+      pronBox.innerHTML = lista.length ? "" : `<div class="subtitle">Sin datos cargados para esta lotería aún.</div>`;
+      lista.slice(0, 5).forEach((item, idx) => {
+        const div = document.createElement("div");
+        div.className = "predict-item";
+        div.innerHTML = `
+          <div style="display:flex; align-items:center;">
+            <span class="predict-rank">#${idx + 1}</span>
+            <div>
+              <strong>${item.key}</strong>
+              <div class="subtitle">Total: ${item.total} · En franja: ${item.franjaCount}</div>
+            </div>
+          </div>
+          <span class="badge">Score ${item.score.toFixed(1)}</span>
+        `;
+        pronBox.appendChild(div);
+      });
+
+      const sel = document.getElementById("animalSelect");
+      const prevVal = sel.value;
+      sel.innerHTML = "";
+      Array.from(animalesMap.keys()).sort().forEach(k => {
+        const opt = document.createElement("option");
+        opt.value = k;
+        opt.textContent = k;
+        sel.appendChild(opt);
+      });
+      if (prevVal && animalesMap.has(prevVal)) sel.value = prevVal;
+
+      renderAnimalStats();
+    }
+
+    function renderAnimalStats() {
+      const key = document.getElementById("animalSelect").value;
+      const datos = historial.filter(r => r.loteria === loteriaActual && `${r.numero || ""} ${r.animal}`.trim() === key);
+      const barsEl = document.getElementById("horasBars");
+      const franjasEl = document.getElementById("franjasBox");
+      const resEl = document.getElementById("resumenAnimal");
+
+      if (!key || !datos.length) {
+        barsEl.innerHTML = "";
+        franjasEl.innerHTML = "";
+        resEl.textContent = "-";
+        return;
+      }
+
+      resEl.textContent = `Salió ${datos.length} ${datos.length === 1 ? "vez" : "veces"}`;
+      const countsByHour = HORAS.map(h => ({ h, c: datos.filter(d => Number(d.hora) === h).length }));
+      const maxC = Math.max(1, ...countsByHour.map(x => x.c));
+
+      barsEl.innerHTML = "";
+      countsByHour.forEach(x => {
+        const pct = Math.round((x.c / maxC) * 100);
+        barsEl.innerHTML += `
+          <div class="bar-col" title="${fmtHora(x.h)}: ${x.c}">
+            <div class="bar" style="height:${pct}%"></div>
+            <div class="bar-lbl">${fmtHora(x.h)}</div>
+          </div>
+        `;
+      });
+
+      const m = datos.filter(d => enFranja(d.hora, "manana")).length;
+      const t = datos.filter(d => enFranja(d.hora, "tarde")).length;
+      const n = datos.filter(d => enFranja(d.hora, "noche")).length;
+
+      franjasEl.innerHTML = `
+        <div class="franja-box"><div class="franja-num">${m}</div><div class="franja-sub">Mañana (8a-11a)</div></div>
+        <div class="franja-box"><div class="franja-num">${t}</div><div class="franja-sub">Tarde (12p-4p)</div></div>
+        <div class="franja-box"><div class="franja-num">${n}</div><div class="franja-sub">Noche (5p-7p)</div></div>
+      `;
+    }
+
+    render();
+  </script>
+</body>
+</html>
