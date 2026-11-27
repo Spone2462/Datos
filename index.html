@@ -147,6 +147,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
   }
   .card-title span.sub {
     font-size: 0.7rem;
@@ -158,6 +160,9 @@
   /* Formularios */
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  @media (max-width: 560px) {
+    .grid-3 { grid-template-columns: 1fr; }
+  }
   label {
     display: block;
     font-size: 0.72rem;
@@ -206,18 +211,6 @@
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 
   /* Pronóstico y Top 10 */
-  .last-draw-banner {
-    background: var(--card2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 12px;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
   .today-pills {
     display: flex;
     flex-wrap: wrap;
@@ -241,6 +234,7 @@
   }
   @media (max-width: 480px) {
     .top10-list { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
   }
   .pred-item {
     background: var(--card2);
@@ -310,7 +304,7 @@
   .trip-box .ani { font-weight: 700; font-size: 0.76rem; }
   .trip-box .delay { font-size: 0.64rem; color: var(--muted); }
 
-  /* Gráfico de Barras estilo RA Pronósticos */
+  /* Gráfico de Barras */
   .chart-wrap {
     margin-top: 12px;
     background: var(--bg);
@@ -391,7 +385,31 @@
   .s-box .v { font-size: 1rem; font-weight: 900; color: var(--accent); }
   .s-box .l { font-size: 0.68rem; color: var(--muted); }
 
-  /* Tabla Historial y Secuencias */
+  .prob-banner {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    text-align: center;
+  }
+  .prob-val { font-size: 0.95rem; font-weight: 900; color: var(--purple); }
+  .prob-lbl { font-size: 0.66rem; color: var(--muted); }
+
+  /* Secuencias */
+  .seq-summary {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .seq-summary b { color: var(--text); }
   .seq-row {
     display: flex;
     justify-content: space-between;
@@ -401,10 +419,29 @@
     border-radius: 8px;
     margin-bottom: 6px;
     font-size: 0.8rem;
+    gap: 8px;
+  }
+  .seq-sub {
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+  .seq-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
   }
   .badge {
     background: var(--accent-dim);
     color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 0.72rem;
+  }
+  .badge-purple {
+    background: rgba(167, 139, 250, 0.16);
+    color: var(--purple);
     padding: 2px 8px;
     border-radius: 6px;
     font-weight: 800;
@@ -443,7 +480,7 @@
 
 <header>
   <div class="top-row">
-    <div class="brand">🎯 ANIMALITOS PRO <span>V2</span></div>
+    <div class="brand">🎯 ANIMALITOS PRO <span>V2.1</span></div>
     <div class="counter-pill">Registros: <b id="totalCount">0</b></div>
   </div>
   <div class="lotto-tabs">
@@ -464,8 +501,8 @@
 
 <div class="nav-tabs">
   <button class="nav-btn active" onclick="showTab('pronostico', this)">🔮 Pronóstico & Tripletas</button>
-  <button class="nav-btn" onclick="showTab('analisis', this)">📊 Análisis por Animal</button>
-  <button class="nav-btn" onclick="showTab('secuencias', this)">🔗 Secuencias & Ranking</button>
+  <button class="nav-btn" onclick="showTab('analisis', this)">📊 Análisis & Probabilidad</button>
+  <button class="nav-btn" onclick="showTab('secuencias', this)">🔗 Secuencias Cruzadas</button>
   <button class="nav-btn" onclick="showTab('cargar', this)">📥 Cargar / JSON</button>
 </div>
 
@@ -507,17 +544,23 @@
     </div>
   </div>
 
-  <!-- SECCIÓN 2: ANÁLISIS POR ANIMAL (ESTILO RA PRONÓSTICOS) -->
+  <!-- SECCIÓN 2: ANÁLISIS POR ANIMAL + PROBABILIDAD -->
   <div id="sec-analisis" class="section">
     <div class="card">
       <div class="card-title">
-        <span>📈 Frecuencia Detallada por Animal</span>
+        <span>📈 Frecuencia y Probabilidad por Animal</span>
         <span class="sub" id="animalTotalBadge">0 apariciones</span>
       </div>
 
-      <div style="margin-bottom:10px;">
-        <label>Selecciona el Animalito (Orden oficial 0 / 00 al 36):</label>
-        <select id="animalSelect" onchange="renderAnimalStats()"></select>
+      <div class="grid-2" style="margin-bottom:10px;">
+        <div>
+          <label>Selecciona el Animalito (Orden oficial 0 / 00 al 36):</label>
+          <select id="animalSelect" onchange="renderAnimalStats()"></select>
+        </div>
+        <div>
+          <label>Probabilidad en hora específica:</label>
+          <select id="probHourSelect" onchange="renderAnimalStats()"></select>
+        </div>
       </div>
 
       <div class="stat-boxes">
@@ -532,6 +575,21 @@
         <div class="s-box">
           <div class="v" id="stLast" style="font-size:0.76rem;color:var(--blue);padding-top:3px;">--</div>
           <div class="l">Última salida</div>
+        </div>
+      </div>
+
+      <div class="prob-banner">
+        <div>
+          <div class="prob-val" id="probObserved">0.00%</div>
+          <div class="prob-lbl">Prob. Observada (Base)</div>
+        </div>
+        <div>
+          <div class="prob-val" id="probTheoretical" style="color:var(--blue);">2.63%</div>
+          <div class="prob-lbl">Prob. Teórica (1/38)</div>
+        </div>
+        <div>
+          <div class="prob-val" id="probHourRate" style="color:var(--accent);">0.0%</div>
+          <div class="prob-lbl" id="probHourLbl">Acierto en la hora</div>
         </div>
       </div>
 
@@ -552,16 +610,48 @@
     </div>
   </div>
 
-  <!-- SECCIÓN 3: SECUENCIAS & RANKING -->
+  <!-- SECCIÓN 3: SECUENCIAS CRUZADAS & RANKING -->
   <div id="sec-secuencias" class="section">
     <div class="card">
       <div class="card-title">
-        <span>🔗 Secuencias (¿Qué sale después de...?)</span>
+        <span>🔗 Secuencias entre Loterías</span>
+        <span class="sub">Cruce histórico</span>
       </div>
-      <div style="margin-bottom:10px;">
-        <label>Si acaba de salir:</label>
-        <select id="seqAnimalSelect" onchange="renderSecuencias()"></select>
+
+      <div class="grid-2" style="margin-bottom:8px;">
+        <div>
+          <label>Lotería Origen (Disparador):</label>
+          <select id="seqOriginLotto" onchange="renderSecuencias()">
+            <option value="granjita">La Granjita</option>
+            <option value="lotto">Lotto Activo</option>
+            <option value="ruleta">Ruleta Activa</option>
+          </select>
+        </div>
+        <div>
+          <label>Lotería Destino (Resultado a ver):</label>
+          <select id="seqTargetLotto" onchange="renderSecuencias()">
+            <option value="lotto">Lotto Activo</option>
+            <option value="granjita">La Granjita</option>
+            <option value="ruleta">Ruleta Activa</option>
+          </select>
+        </div>
       </div>
+
+      <div class="grid-2" style="margin-bottom:10px;">
+        <div>
+          <label>Si sale en Lotería Origen:</label>
+          <select id="seqAnimalSelect" onchange="renderSecuencias()"></select>
+        </div>
+        <div>
+          <label>Tipo de cruce:</label>
+          <select id="seqModeSelect" onchange="renderSecuencias()">
+            <option value="next">Siguiente sorteo cronológico</option>
+            <option value="same_hour">Misma hora del mismo día</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="seq-summary" id="seqSummaryBox">Selecciona un animal para ver su secuencia.</div>
       <div id="seqResults"></div>
     </div>
 
@@ -660,7 +750,7 @@
 
 <script>
 // ============================================================
-// TABLA OFICIAL BLINDADA (Imagen 1000853644.png - 0, 00, 1..36)
+// TABLA OFICIAL BLINDADA (0, 00, 1..36)
 // ============================================================
 const ANIMALITOS = [
   { num: "0",  name: "Delfin",   emoji: "🐬" },
@@ -718,7 +808,7 @@ function normalizeText(str) {
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function findAnimalByName(name) {
@@ -739,6 +829,10 @@ function formatHour(h) {
   if (hr === 12) return "12:00 PM";
   if (hr > 12) return (hr - 12) + ":00 PM";
   return hr + ":00 AM";
+}
+
+function toTimestamp(fecha, hora) {
+  return new Date(`${fecha}T${String(Number(hora)).padStart(2, "0")}:00:00`).getTime();
 }
 
 function showToast(msg) {
@@ -807,6 +901,7 @@ function populateAnimalSelects() {
       `<option value="${a.name}">${a.num} - ${a.emoji} ${a.name}</option>`
     ).join("");
   });
+  document.getElementById("seqAnimalSelect").value = "Perro";
 }
 
 function populateHourSelects() {
@@ -815,7 +910,12 @@ function populateHourSelects() {
   document.getElementById("manHora").innerHTML = html;
   document.getElementById("targetHourSelect").innerHTML = html;
 
-  // Sugerir próxima hora automáticamente según último registro de hoy o último general
+  const prevProbH = Number(document.getElementById("probHourSelect").value);
+  document.getElementById("probHourSelect").innerHTML = html;
+  if (hours.includes(prevProbH)) {
+    document.getElementById("probHourSelect").value = prevProbH;
+  }
+
   const list = getLottoData();
   if (list.length > 0) {
     const last = list[list.length - 1];
@@ -823,6 +923,9 @@ function populateHourSelects() {
     const nextH = (idx >= 0 && idx < hours.length - 1) ? hours[idx + 1] : hours[0];
     document.getElementById("targetHourSelect").value = nextH;
     document.getElementById("manHora").value = nextH;
+    if (!hours.includes(prevProbH)) {
+      document.getElementById("probHourSelect").value = nextH;
+    }
   }
 }
 
@@ -860,7 +963,6 @@ function importarLoteJSON() {
       skipped++;
       return;
     }
-    // Validar horario de Ruleta Activa (9am a 7pm)
     if (lot === "ruleta" && hora < 9) {
       skipped++;
       return;
@@ -900,7 +1002,6 @@ function agregarManual() {
     return;
   }
 
-  // Reemplazar si ya existe esa misma fecha + hora en esa lotería
   db = db.filter(r => !(r.loteria === currentLotto && r.fecha === fecha && Number(r.hora) === hora));
   db.push({
     loteria: currentLotto,
@@ -964,7 +1065,7 @@ function computeStats(list) {
   const freq = {};
   const hourFreq = {};
   const lastIdx = {};
-  const transitions = {}; // transitions[prevAnimal][nextAnimal] = count
+  const transitions = {};
 
   ANIMALITOS.forEach(a => {
     freq[a.name] = 0;
@@ -1018,7 +1119,6 @@ function renderPronostico() {
   const targetHour = Number(document.getElementById("targetHourSelect").value);
   document.getElementById("nextDrawLabel").textContent = `Para: ${formatHour(targetHour)}`;
 
-  // Animales que ya salieron en la fecha del último registro
   const latestDate = last.fecha;
   const outToday = list.filter(r => r.fecha === latestDate).map(r => r.animal);
   const outTodaySet = new Set(outToday);
@@ -1036,17 +1136,14 @@ function renderPronostico() {
   const stats = computeStats(list);
   const avgDelay = 38;
 
-  // Puntuación ponderada para el próximo sorteo
   const scored = ANIMALITOS.map(a => {
     const hHits = stats.hourFreq[a.name][targetHour] || 0;
     const seqHits = (stats.transitions[last.animal] && stats.transitions[last.animal][a.name]) || 0;
     const delay = stats.delays[a.name];
     const totalHits = stats.freq[a.name];
 
-    // Penalizar repetición inmediata el mismo día
     const sameDayPenalty = outTodaySet.has(a.name) ? 0.55 : 1.0;
 
-    // Score combinado: deuda (atraso) + afinidad horaria + secuencia tras último animal + frecuencia base
     const delayScore = Math.min(delay / avgDelay, 2.2) * 38;
     const hourScore = hHits * 11;
     const seqScore = seqHits * 14;
@@ -1083,10 +1180,6 @@ function renderPronostico() {
     `;
   }).join("");
 
-  // ============================================================
-  // TRIPLETAS (3 animales con alta probabilidad en ciclo de 11 sorteos)
-  // ============================================================
-  // Priorizamos animales que no han salido hoy y tienen atraso maduro (entre 18 y 75 sorteos) o fuerte tendencia
   const candidates = scored.filter(a => !a.outToday);
   const pool = candidates.length >= 9 ? candidates : scored;
 
@@ -1096,7 +1189,7 @@ function renderPronostico() {
     { title: "Tripleta #3 • Cobertura 11 Sorteos", items: [pool[1], pool[5], pool[6]] }
   ];
 
-  tripEl.innerHTML = tripletas.map((t, idx) => {
+  tripEl.innerHTML = tripletas.map(t => {
     const copyStr = t.items.map(x => `${x.num} ${x.name}`).join(" - ");
     return `
       <div class="tripleta-card">
@@ -1126,18 +1219,31 @@ function copiarTexto(txt) {
 }
 
 // ============================================================
-// ANÁLISIS POR ANIMAL (GRÁFICO DE BARRAS ESTILO VIDEO)
+// ANÁLISIS POR ANIMAL + PROBABILIDAD
 // ============================================================
 function renderAnimalStats() {
   const list = getLottoData();
   const selectedName = document.getElementById("animalSelect").value;
+  const probHour = Number(document.getElementById("probHourSelect").value);
   const hours = LOTTO_CONFIG[currentLotto].hours;
 
   const matches = list.filter(r => r.animal === selectedName);
   document.getElementById("stTotal").textContent = matches.length;
   document.getElementById("animalTotalBadge").textContent = `${matches.length} apariciones de ${list.length} sorteos`;
 
-  // Atraso y última salida
+  // Probabilidad observada y teórica
+  const probObs = list.length > 0 ? ((matches.length / list.length) * 100).toFixed(2) : "0.00";
+  const probTeo = ((1 / ANIMALITOS.length) * 100).toFixed(2);
+  document.getElementById("probObserved").textContent = `${probObs}%`;
+  document.getElementById("probTheoretical").textContent = `${probTeo}%`;
+
+  // Probabilidad en la hora seleccionada
+  const drawsInHour = list.filter(r => Number(r.hora) === probHour);
+  const hitsInHour = matches.filter(r => Number(r.hora) === probHour).length;
+  const probHrPct = drawsInHour.length > 0 ? ((hitsInHour / drawsInHour.length) * 100).toFixed(2) : "0.00";
+  document.getElementById("probHourRate").textContent = `${probHrPct}%`;
+  document.getElementById("probHourLbl").textContent = `Hora ${formatHour(probHour)} (${hitsInHour}/${drawsInHour.length})`;
+
   let delay = list.length;
   let lastStr = "Nunca";
   for (let i = list.length - 1; i >= 0; i--) {
@@ -1150,7 +1256,6 @@ function renderAnimalStats() {
   document.getElementById("stDelay").textContent = delay;
   document.getElementById("stLast").textContent = lastStr;
 
-  // Barras por hora
   const byHour = {};
   hours.forEach(h => byHour[h] = 0);
   matches.forEach(r => {
@@ -1180,7 +1285,6 @@ function renderAnimalStats() {
     }).join("")}
   `;
 
-  // Por parte del día
   let manana = 0, tarde = 0, noche = 0;
   matches.forEach(r => {
     const h = Number(r.hora);
@@ -1194,7 +1298,6 @@ function renderAnimalStats() {
     <div class="s-box"><div class="v">${noche}</div><div class="l">Noche (5-7p)</div></div>
   `;
 
-  // Por día de la semana
   const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
   const byDay = [0, 0, 0, 0, 0, 0, 0];
   matches.forEach(r => {
@@ -1202,7 +1305,6 @@ function renderAnimalStats() {
     if (!isNaN(d)) byDay[d]++;
   });
   const maxD = Math.max(...byDay, 1);
-  // Ordenar Lun..Dom
   const order = [1, 2, 3, 4, 5, 6, 0];
   document.getElementById("weekdayChart").innerHTML = order.map(dIdx => {
     const val = byDay[dIdx];
@@ -1218,34 +1320,109 @@ function renderAnimalStats() {
 }
 
 // ============================================================
-// SECUENCIAS & RANKING CALIENTES / FRÍOS
+// SECUENCIAS CRUZADAS ENTRE LOTERÍAS & RANKING
 // ============================================================
-function renderSecuencias() {
-  const list = getLottoData();
-  const stats = computeStats(list);
-  const selAnimal = document.getElementById("seqAnimalSelect").value;
-  const seqEl = document.getElementById("seqResults");
+function computeCrossSequence(originKey, targetKey, triggerAnimal, mode) {
+  const originList = getLottoData(originKey)
+    .filter(r => r.animal === triggerAnimal)
+    .map(r => ({ ...r, ts: toTimestamp(r.fecha, r.hora) }));
 
-  const nextMap = stats.transitions[selAnimal] || {};
-  const sortedNext = Object.entries(nextMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8);
+  const targetList = getLottoData(targetKey)
+    .map(r => ({ ...r, ts: toTimestamp(r.fecha, r.hora) }));
 
-  if (sortedNext.length === 0) {
-    seqEl.innerHTML = `<div style="color:var(--muted);font-size:0.8rem;">Aún no hay suficientes secuencias registradas después de ${selAnimal}.</div>`;
+  const results = {};
+  const lastHit = {};
+  ANIMALITOS.forEach(a => {
+    results[a.name] = 0;
+    lastHit[a.name] = null;
+  });
+
+  let evaluatedTriggers = 0;
+
+  if (mode === "same_hour") {
+    const targetMap = new Map();
+    targetList.forEach(t => targetMap.set(`${t.fecha}|${Number(t.hora)}`, t));
+
+    originList.forEach(src => {
+      const match = targetMap.get(`${src.fecha}|${Number(src.hora)}`);
+      if (match) {
+        evaluatedTriggers++;
+        results[match.animal] = (results[match.animal] || 0) + 1;
+        lastHit[match.animal] = `${match.fecha.slice(5)} ${formatHour(match.hora)}`;
+      }
+    });
   } else {
-    seqEl.innerHTML = sortedNext.map(([aniName, count]) => {
+    // Siguiente sorteo cronológico en la lotería destino
+    let tIdx = 0;
+    originList.forEach(src => {
+      while (tIdx < targetList.length && targetList[tIdx].ts <= src.ts) {
+        tIdx++;
+      }
+      if (tIdx < targetList.length) {
+        evaluatedTriggers++;
+        const nextDraw = targetList[tIdx];
+        results[nextDraw.animal] = (results[nextDraw.animal] || 0) + 1;
+        lastHit[nextDraw.animal] = `${nextDraw.fecha.slice(5)} ${formatHour(nextDraw.hora)}`;
+      }
+    });
+  }
+
+  return {
+    totalOriginTriggers: originList.length,
+    evaluatedTriggers,
+    results,
+    lastHit
+  };
+}
+
+function renderSecuencias() {
+  const originKey = document.getElementById("seqOriginLotto").value;
+  const targetKey = document.getElementById("seqTargetLotto").value;
+  const selAnimal = document.getElementById("seqAnimalSelect").value;
+  const mode = document.getElementById("seqModeSelect").value;
+
+  const seqEl = document.getElementById("seqResults");
+  const summaryEl = document.getElementById("seqSummaryBox");
+
+  const cross = computeCrossSequence(originKey, targetKey, selAnimal, mode);
+  const originLabel = LOTTO_CONFIG[originKey].label;
+  const targetLabel = LOTTO_CONFIG[targetKey].label;
+  const modeLabel = mode === "same_hour" ? "misma hora" : "siguiente sorteo en";
+
+  summaryEl.innerHTML =
+    `<b>${selAnimal}</b> en <b>${originLabel}</b> (${cross.totalOriginTriggers} salidas) → ${modeLabel} <b>${targetLabel}</b>: ` +
+    `<b>${cross.evaluatedTriggers}</b> cruces evaluados.`;
+
+  const sorted = Object.entries(cross.results)
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+
+  if (sorted.length === 0 || cross.evaluatedTriggers === 0) {
+    seqEl.innerHTML = `<div style="color:var(--muted);font-size:0.8rem;">No hay suficientes datos cruzados para esta combinación con los registros actuales.</div>`;
+  } else {
+    seqEl.innerHTML = sorted.map(([aniName, count]) => {
       const a = findAnimalByName(aniName) || { num: "", emoji: "" };
+      const pct = ((count / cross.evaluatedTriggers) * 100).toFixed(1);
+      const lastInfo = cross.lastHit[aniName] ? `Última: ${cross.lastHit[aniName]}` : "";
       return `
         <div class="seq-row">
-          <span><b>${a.num}</b> ${a.emoji} ${aniName}</span>
-          <span class="badge">${count} veces</span>
+          <div>
+            <div><b>${a.num}</b> ${a.emoji} ${aniName}</div>
+            <div class="seq-sub">${lastInfo}</div>
+          </div>
+          <div class="seq-right">
+            <span class="badge">${count}x</span>
+            <span class="badge-purple">${pct}%</span>
+          </div>
         </div>
       `;
     }).join("");
   }
 
-  // Hot & Cold
+  // Hot & Cold de la lotería activa superior
+  const list = getLottoData();
+  const stats = computeStats(list);
   const hot = [...ANIMALITOS].sort((a, b) => stats.freq[b.name] - stats.freq[a.name]).slice(0, 8);
   const cold = [...ANIMALITOS].sort((a, b) => stats.delays[b.name] - stats.delays[a.name]).slice(0, 8);
 
