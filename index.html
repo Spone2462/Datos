@@ -434,6 +434,10 @@
     border: 1px solid rgba(0, 230, 118, 0.45);
     background: rgba(0, 230, 118, 0.06);
   }
+  .seq-row.same-hit {
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    background: rgba(56, 189, 248, 0.06);
+  }
   .seq-sub {
     font-size: 0.68rem;
     color: var(--muted);
@@ -447,6 +451,14 @@
   .badge {
     background: var(--accent-dim);
     color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 0.72rem;
+  }
+  .badge-blue {
+    background: rgba(56, 189, 248, 0.16);
+    color: var(--blue);
     padding: 2px 8px;
     border-radius: 6px;
     font-weight: 800;
@@ -501,7 +513,7 @@
 
 <header>
   <div class="top-row">
-    <div class="brand">🎯 ANIMALITOS PRO <span>V2.2</span></div>
+    <div class="brand">🎯 ANIMALITOS PRO <span>V2.3</span></div>
     <div class="counter-pill">Registros: <b id="totalCount">0</b></div>
   </div>
   <div class="lotto-tabs">
@@ -631,12 +643,12 @@
     </div>
   </div>
 
-  <!-- SECCIÓN 3: SECUENCIAS CRUZADAS & VENTANA DE SORTEOS -->
+  <!-- SECCIÓN 3: SECUENCIAS CRUZADAS + SECUENCIA INTERNA -->
   <div id="sec-secuencias" class="section">
     <div class="card">
       <div class="card-title">
-        <span>🔗 Secuencias Automáticas & Ventana</span>
-        <span class="sub">Tiempo real + Próximos sorteos</span>
+        <span>🔗 Configuración de Secuencias</span>
+        <span class="sub">Cruzada + Interna</span>
       </div>
 
       <div class="auto-alert" id="autoTriggerBox">
@@ -645,7 +657,7 @@
 
       <div class="grid-2" style="margin-bottom:8px;">
         <div>
-          <label>Lotería Origen (Disparador):</label>
+          <label>Lotería Origen (Disparador cruzado):</label>
           <select id="seqOriginLotto" onchange="onSeqConfigChange(true)">
             <option value="granjita">La Granjita</option>
             <option value="lotto">Lotto Activo</option>
@@ -653,7 +665,7 @@
           </select>
         </div>
         <div>
-          <label>Lotería Destino (A dónde apunta):</label>
+          <label>Lotería Destino (A analizar):</label>
           <select id="seqTargetLotto" onchange="renderSecuencias()">
             <option value="lotto">Lotto Activo</option>
             <option value="granjita">La Granjita</option>
@@ -662,9 +674,9 @@
         </div>
       </div>
 
-      <div class="grid-3" style="margin-bottom:10px;">
+      <div class="grid-3" style="margin-bottom:4px;">
         <div>
-          <label>Animal disparador:</label>
+          <label>Animal disparador (cruce):</label>
           <select id="seqAnimalSelect" onchange="renderSecuencias()"></select>
         </div>
         <div>
@@ -697,9 +709,26 @@
           </select>
         </div>
       </div>
+    </div>
 
-      <div class="seq-summary" id="seqSummaryBox">Calculando secuencias...</div>
+    <!-- BLOQUE A: SECUENCIA CRUZADA ENTRE LOTERÍAS -->
+    <div class="card">
+      <div class="card-title">
+        <span>🔀 1. Secuencia Cruzada (Otra Lotería → Destino)</span>
+        <span class="sub" id="crossBadge">Ventana</span>
+      </div>
+      <div class="seq-summary" id="seqSummaryBox">Calculando secuencia cruzada...</div>
       <div id="seqResults"></div>
+    </div>
+
+    <!-- BLOQUE B: SECUENCIA INTERNA EN LA MISMA LOTERÍA -->
+    <div class="card">
+      <div class="card-title">
+        <span>🔁 2. Secuencia Interna (Misma Lotería Destino)</span>
+        <span class="sub" id="sameLottoBadge">Según último salido</span>
+      </div>
+      <div class="seq-summary" id="sameSummaryBox">Calculando secuencia interna...</div>
+      <div id="sameResults"></div>
     </div>
 
     <div class="grid-2">
@@ -1414,7 +1443,7 @@ function renderAnimalStats() {
 }
 
 // ============================================================
-// SECUENCIAS AUTOMÁTICAS ENTRE LOTERÍAS Y VENTANA DE SORTEOS
+// SECUENCIAS CRUZADAS + SECUENCIA INTERNA EN MISMA LOTERÍA
 // ============================================================
 function computeCrossSequence(originKey, targetKey, triggerAnimal, windowMode, hourFilter) {
   const originList = getLottoData(originKey)
@@ -1428,9 +1457,9 @@ function computeCrossSequence(originKey, targetKey, triggerAnimal, windowMode, h
   const targetList = getLottoData(targetKey)
     .map(r => ({ ...r, ts: toTimestamp(r.fecha, r.hora) }));
 
-  const windowHits = {};      // cuántas veces aparece el animal dentro de la ventana de N sorteos
-  const windowWindows = {};   // cuántas ventanas (de N sorteos) contuvieron al menos 1 salida del animal
-  const stepCounts = {};      // en qué posición (1..N) suele caer más
+  const windowHits = {};
+  const windowWindows = {};
+  const stepCounts = {};
   const lastHit = {};
 
   ANIMALITOS.forEach(a => {
@@ -1492,6 +1521,116 @@ function computeCrossSequence(originKey, targetKey, triggerAnimal, windowMode, h
   };
 }
 
+function computeSameLottoSequence(targetKey, windowMode, hourFilter) {
+  const list = getLottoData(targetKey);
+  const windowHits = {};
+  const windowWindows = {};
+  const stepCounts = {};
+  const lastHit = {};
+
+  ANIMALITOS.forEach(a => {
+    windowHits[a.name] = 0;
+    windowWindows[a.name] = 0;
+    stepCounts[a.name] = {};
+    lastHit[a.name] = null;
+  });
+
+  if (list.length === 0) {
+    return {
+      latestAnimal: null,
+      latestDraw: null,
+      totalTriggers: 0,
+      evaluatedTriggers: 0,
+      windowHits,
+      windowWindows,
+      stepCounts,
+      lastHit
+    };
+  }
+
+  const latestDraw = list[list.length - 1];
+  const latestAnimal = latestDraw.animal;
+  const span = windowMode === "same_hour" ? 1 : Math.max(1, Number(windowMode) || 1);
+
+  let totalTriggers = 0;
+  let evaluatedTriggers = 0;
+
+  for (let i = 0; i < list.length; i++) {
+    const r = list[i];
+    if (r.animal !== latestAnimal) continue;
+    if (hourFilter !== "all" && Number(r.hora) !== Number(hourFilter)) continue;
+
+    totalTriggers++;
+    const slice = list.slice(i + 1, i + 1 + span);
+    if (slice.length > 0) {
+      evaluatedTriggers++;
+      const seenInWindow = new Set();
+      slice.forEach((nextItem, offsetIdx) => {
+        const stepPos = offsetIdx + 1;
+        windowHits[nextItem.animal] = (windowHits[nextItem.animal] || 0) + 1;
+        stepCounts[nextItem.animal][stepPos] = (stepCounts[nextItem.animal][stepPos] || 0) + 1;
+        lastHit[nextItem.animal] = `${nextItem.fecha.slice(5)} ${formatHour(nextItem.hora)} (#${stepPos})`;
+        seenInWindow.add(nextItem.animal);
+      });
+      seenInWindow.forEach(aniName => {
+        windowWindows[aniName] = (windowWindows[aniName] || 0) + 1;
+      });
+    }
+  }
+
+  return {
+    latestAnimal,
+    latestDraw,
+    totalTriggers,
+    evaluatedTriggers,
+    windowHits,
+    windowWindows,
+    stepCounts,
+    lastHit
+  };
+}
+
+function formatRankingRows(crossData, windowMode, rowClass) {
+  const sorted = Object.entries(crossData.windowWindows)
+    .filter(([, wCount]) => wCount > 0)
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return (crossData.windowHits[b[0]] || 0) - (crossData.windowHits[a[0]] || 0);
+    })
+    .slice(0, 8);
+
+  if (sorted.length === 0 || crossData.evaluatedTriggers === 0) {
+    return `<div style="color:var(--muted);font-size:0.8rem;">No hay suficientes coincidencias para este filtro con los registros actuales.</div>`;
+  }
+
+  return sorted.map(([aniName, wCount], idx) => {
+    const a = findAnimalByName(aniName) || { num: "", emoji: "" };
+    const totalAppears = crossData.windowHits[aniName] || 0;
+    const winPct = ((wCount / crossData.evaluatedTriggers) * 100).toFixed(1);
+
+    const stepsMap = crossData.stepCounts[aniName] || {};
+    const bestStep = Object.entries(stepsMap).sort((x, y) => y[1] - x[1])[0];
+    const stepLabel = windowMode === "same_hour"
+      ? "misma hora"
+      : (bestStep ? `más en turno #${bestStep[0]} (${bestStep[1]}x)` : "");
+
+    const lastInfo = crossData.lastHit[aniName] ? `Última: ${crossData.lastHit[aniName]}` : "";
+
+    return `
+      <div class="seq-row ${idx === 0 ? rowClass : ""}">
+        <div>
+          <div><b>${a.num}</b> ${a.emoji} ${aniName}</div>
+          <div class="seq-sub">${totalAppears} apariciones • ${stepLabel}${lastInfo ? ` • ${lastInfo}` : ""}</div>
+        </div>
+        <div class="seq-right">
+          <span class="badge-amber">${wCount}/${crossData.evaluatedTriggers}</span>
+          <span class="badge-purple">${winPct}%</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
 function renderAutoBanner(originKey, targetKey, windowMode, hourFilter) {
   const box = document.getElementById("autoTriggerBox");
   const list = getLottoData(originKey);
@@ -1539,58 +1678,41 @@ function renderSecuencias() {
 
   const seqEl = document.getElementById("seqResults");
   const summaryEl = document.getElementById("seqSummaryBox");
+  const sameEl = document.getElementById("sameResults");
+  const sameSummaryEl = document.getElementById("sameSummaryBox");
 
   renderAutoBanner(originKey, targetKey, windowMode, hourFilter);
 
-  const cross = computeCrossSequence(originKey, targetKey, selAnimal, windowMode, hourFilter);
   const originLabel = LOTTO_CONFIG[originKey].label;
   const targetLabel = LOTTO_CONFIG[targetKey].label;
   const hourText = hourFilter === "all" ? "todas las horas" : `a las ${formatHour(hourFilter)}`;
   const winText = windowMode === "same_hour" ? "misma hora" : `próximos ${windowMode} sorteo(s)`;
 
+  document.getElementById("crossBadge").textContent = windowMode === "same_hour" ? "Misma hora" : `Próx. ${windowMode}`;
+  document.getElementById("sameLottoBadge").textContent = targetLabel;
+
+  // 1. Secuencia cruzada
+  const cross = computeCrossSequence(originKey, targetKey, selAnimal, windowMode, hourFilter);
   summaryEl.innerHTML =
     `<b>${selAnimal}</b> en <b>${originLabel}</b> (${hourText}: ${cross.totalOriginTriggers} salidas) → ` +
     `${winText} en <b>${targetLabel}</b>: <b>${cross.evaluatedTriggers}</b> ciclos evaluados.`;
+  seqEl.innerHTML = formatRankingRows(cross, windowMode, "top-hit");
 
-  const sorted = Object.entries(cross.windowWindows)
-    .filter(([, wCount]) => wCount > 0)
-    .sort((a, b) => {
-      if (b[1] !== a[1]) return b[1] - a[1];
-      return (cross.windowHits[b[0]] || 0) - (cross.windowHits[a[0]] || 0);
-    })
-    .slice(0, 10);
-
-  if (sorted.length === 0 || cross.evaluatedTriggers === 0) {
-    seqEl.innerHTML = `<div style="color:var(--muted);font-size:0.8rem;">No hay suficientes coincidencias para este filtro con los registros actuales.</div>`;
+  // 2. Secuencia interna en la misma lotería destino
+  const sameData = computeSameLottoSequence(targetKey, windowMode, hourFilter);
+  if (!sameData.latestAnimal) {
+    sameSummaryEl.innerHTML = `Sin registros en <b>${targetLabel}</b> para calcular secuencia interna.`;
+    sameEl.innerHTML = "";
   } else {
-    seqEl.innerHTML = sorted.map(([aniName, wCount], idx) => {
-      const a = findAnimalByName(aniName) || { num: "", emoji: "" };
-      const totalAppears = cross.windowHits[aniName] || 0;
-      const winPct = ((wCount / cross.evaluatedTriggers) * 100).toFixed(1);
-
-      const stepsMap = cross.stepCounts[aniName] || {};
-      const bestStep = Object.entries(stepsMap).sort((x, y) => y[1] - x[1])[0];
-      const stepLabel = windowMode === "same_hour"
-        ? "misma hora"
-        : (bestStep ? `más en turno #${bestStep[0]} (${bestStep[1]}x)` : "");
-
-      const lastInfo = cross.lastHit[aniName] ? `Última: ${cross.lastHit[aniName]}` : "";
-
-      return `
-        <div class="seq-row ${idx === 0 ? "top-hit" : ""}">
-          <div>
-            <div><b>${a.num}</b> ${a.emoji} ${aniName}</div>
-            <div class="seq-sub">${totalAppears} apariciones • ${stepLabel}${lastInfo ? ` • ${lastInfo}` : ""}</div>
-          </div>
-          <div class="seq-right">
-            <span class="badge-amber">${wCount}/${cross.evaluatedTriggers}</span>
-            <span class="badge-purple">${winPct}%</span>
-          </div>
-        </div>
-      `;
-    }).join("");
+    const latestAni = findAnimalByName(sameData.latestAnimal) || { num: "", emoji: "" };
+    sameSummaryEl.innerHTML =
+      `Último en <b>${targetLabel}</b>: <b>${latestAni.num} ${latestAni.emoji} ${sameData.latestAnimal}</b> ` +
+      `(${formatHour(sameData.latestDraw.hora)}) • Historial (${hourText}: ${sameData.totalTriggers} salidas) → ` +
+      `${winText} en <b>${targetLabel}</b>: <b>${sameData.evaluatedTriggers}</b> ciclos.`;
+    sameEl.innerHTML = formatRankingRows(sameData, windowMode, "same-hit");
   }
 
+  // Hot & Cold
   const list = getLottoData();
   const stats = computeStats(list);
   const hot = [...ANIMALITOS].sort((a, b) => stats.freq[b.name] - stats.freq[a.name]).slice(0, 8);
