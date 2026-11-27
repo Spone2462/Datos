@@ -633,11 +633,11 @@
       <div id="savedTripletaContainer"></div>
     </div>
 
-    <!-- TRIPLETA ARMADA POR LO QUE YA SALIÓ HOY (PRÓXIMOS 5 SORTEOS DEL DÍA) -->
+    <!-- TRIPLETA ARMADA POR CORTES FIJOS (VENTANA 11 SORTEOS) -->
     <div class="card">
       <div class="card-title">
-        <span>🧩 Tripleta por Lo Que Ya Salió Hoy</span>
-        <span class="sub">Ventana próximos 5 sorteos del día</span>
+        <span>🧩 Tripleta por Cortes Fijos (11 Sorteos)</span>
+        <span class="sub">Cortes 10:00 AM y 3:00 PM</span>
       </div>
       <div id="dayTripletaContainer"></div>
     </div>
@@ -759,9 +759,9 @@
           <select id="seqWindowSelect" onchange="onSeqConfigChange(false)">
             <option value="1">Siguiente sorteo (1)</option>
             <option value="3">Próximos 3 sorteos</option>
-            <option value="5" selected>Próximos 5 sorteos</option>
+            <option value="5">Próximos 5 sorteos</option>
             <option value="8">Próximos 8 sorteos</option>
-            <option value="11">Ciclo 11 sorteos</option>
+            <option value="11" selected>Ciclo 11 sorteos</option>
             <option value="same_hour">Misma hora del día</option>
           </select>
         </div>
@@ -946,9 +946,11 @@ const ANIMALITOS = [
 
 const STORAGE_KEY = "animalitos_pro_v2_db";
 const SAVED_TRIPLETA_KEY = "animalitos_pro_saved_tripleta_v1";
+const DAY_CUT_TRIPLETA_KEY = "animalitos_pro_day_cut_tripleta_v1";
 let currentLotto = "lotto"; // 'lotto' | 'granjita' | 'ruleta'
 let db = [];
 let savedTripleta = null;
+let dayCutCache = null;
 let userPickedSeqAnimal = false;
 let lastGeneratedTripletaNames = [];
 
@@ -1037,6 +1039,12 @@ function loadDB() {
     savedTripleta = rawTrip ? JSON.parse(rawTrip) : null;
   } catch (e) {
     savedTripleta = null;
+  }
+  try {
+    const rawCut = localStorage.getItem(DAY_CUT_TRIPLETA_KEY);
+    dayCutCache = rawCut ? JSON.parse(rawCut) : null;
+  } catch (e) {
+    dayCutCache = null;
   }
 }
 
@@ -1341,7 +1349,7 @@ function borrarTodo() {
 }
 
 // ============================================================
-// MOTOR ESTADÍSTICO: PRONÓSTICOS (+1, +2, +3), VENTANA 5 SORTEOS Y TRIPLETAS
+// MOTOR ESTADÍSTICO: PRONÓSTICOS (+1, +2, +3), VENTANA 11 SORTEOS Y TRIPLETAS
 // ============================================================
 function computeStats(list) {
   const total = list.length;
@@ -1404,7 +1412,7 @@ function computeStats(list) {
   };
 }
 
-function computeSameDayWindowCalls(list, triggerAnimal, windowSpan = 5) {
+function computeSameDayWindowCalls(list, triggerAnimal, windowSpan = 11) {
   const hitCount = {};
   const windowHits = {};
   ANIMALITOS.forEach(a => {
@@ -1458,7 +1466,7 @@ function getCrossCandidatesForCurrentLotto(outTodaySet) {
   const originKey = document.getElementById("seqOriginLotto")?.value || (currentLotto === "ruleta" ? "ruleta" : "granjita");
   const targetKey = currentLotto;
   const selAnimal = document.getElementById("seqAnimalSelect")?.value;
-  const windowMode = document.getElementById("seqWindowSelect")?.value || "5";
+  const windowMode = document.getElementById("seqWindowSelect")?.value || "11";
   const hourFilter = document.getElementById("seqHourFilter")?.value || "all";
 
   const effectiveOrigin = originKey === targetKey
@@ -1508,7 +1516,7 @@ function renderSavedTripleta(list, outTodaySet, stats, targetHour) {
     badge.textContent = "Sin guardar";
     container.innerHTML = `
       <div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">
-        No tienes una tripleta guardada todavía. Puedes guardar la tripleta armada de hoy o elegir 3 animales manualmente.
+        No tienes una tripleta guardada todavía. Puedes guardar la tripleta del corte de hoy o elegir 3 animales manualmente.
       </div>
       <div class="grid-3" style="margin-bottom:8px;">
         <select id="pickTrip1">${ANIMALITOS.map(a => `<option value="${a.name}">${a.num} ${a.name}</option>`).join("")}</select>
@@ -1517,7 +1525,7 @@ function renderSavedTripleta(list, outTodaySet, stats, targetHour) {
       </div>
       <div class="btn-row">
         <button class="btn btn-green-sm" onclick="saveTripletaFromSelectors()">💾 Guardar Esta Tripleta</button>
-        ${lastGeneratedTripletaNames.length === 3 ? `<button class="btn btn-dark" onclick="saveTripletaToStorage(lastGeneratedTripletaNames, 'Tripleta del día')">⚡ Guardar la de Hoy</button>` : ""}
+        ${lastGeneratedTripletaNames.length === 3 ? `<button class="btn btn-dark" onclick="saveTripletaToStorage(lastGeneratedTripletaNames, 'Tripleta del corte')">⚡ Guardar la del Corte</button>` : ""}
       </div>
     `;
     return;
@@ -1544,7 +1552,7 @@ function renderSavedTripleta(list, outTodaySet, stats, targetHour) {
       <div class="trip-box ${salioHoy ? "hit-ok" : ""}">
         <div class="num">${a.num}</div>
         <div class="ani">${a.emoji} ${a.name}</div>
-        <div class="delay">${salioHoy ? "Ya salió en la jornada" : `Prob. est.: ${estProb}% • Atr: ${delay}`}</div>
+        <div class="delay">${salioHoy ? "Ya salió en la jornada" : `Fuerza ciclo/hora: ${estProb}% • Atr: ${delay}`}</div>
         <span class="status-tag ${salioHoy ? "tag-hit" : "tag-pend"}">
           ${salioHoy ? "✅ SALIÓ" : `⏳ FALTA (${estProb}%)`}
         </span>
@@ -1573,12 +1581,21 @@ function saveTripletaFromSelectors() {
   saveTripletaToStorage([n1, n2, n3], "Manual");
 }
 
-function renderDayTripleta(list, outTodaySet) {
+function getFixedCutSlot(targetHour) {
+  return targetHour >= 15 ? "tarde_15" : "manana_10";
+}
+
+function getFixedCutLabel(slotKey) {
+  return slotKey === "tarde_15" ? "Corte Tarde (3:00 PM)" : "Corte Mañana (10:00 AM)";
+}
+
+function renderDayTripleta(list, outTodaySet, forceRecalc = false) {
   const container = document.getElementById("dayTripletaContainer");
   const todayISO = getLocalTodayISO();
+  const targetHour = Number(document.getElementById("targetHourSelect")?.value || 10);
 
   if (list.length === 0) {
-    container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">Carga resultados para armar la tripleta según lo que ya salió en el día.</div>`;
+    container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">Carga resultados para armar la tripleta de 11 sorteos.</div>`;
     return;
   }
 
@@ -1586,7 +1603,38 @@ function renderDayTripleta(list, outTodaySet) {
 
   if (todayDraws.length === 0) {
     lastGeneratedTripletaNames = [];
-    container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">Aún no hay sorteos registrados hoy (${todayISO}) para armar la tripleta del día.</div>`;
+    container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">Aún no hay sorteos registrados hoy (${todayISO}) para armar la tripleta del corte.</div>`;
+    return;
+  }
+
+  const slotKey = getFixedCutSlot(targetHour);
+  const corteLabel = getFixedCutLabel(slotKey);
+  const cacheKey = `${currentLotto}|${todayISO}|${slotKey}`;
+
+  if (!forceRecalc && dayCutCache && dayCutCache.key === cacheKey && Array.isArray(dayCutCache.picked) && dayCutCache.picked.length === 3) {
+    lastGeneratedTripletaNames = dayCutCache.picked.map(x => x.name);
+    const copyStr = dayCutCache.picked.map(x => `${x.num} ${x.name}`).join(" - ");
+    container.innerHTML = `
+      <div class="tripleta-card day-builder">
+        <div class="tripleta-header">
+          <b>${corteLabel} • Fija 11 sorteos (${todayISO})</b>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-green-sm" style="padding:4px 8px;font-size:0.7rem;" onclick="saveTripletaToStorage(lastGeneratedTripletaNames, '${corteLabel}')">💾 Guardar</button>
+            <button class="btn btn-dark" style="padding:4px 8px;font-size:0.7rem;" onclick="copiarTexto('${copyStr}')">Copiar</button>
+          </div>
+        </div>
+        <div class="tripleta-animals">
+          ${dayCutCache.picked.map(x => `
+            <div class="trip-box">
+              <div class="num">${x.num}</div>
+              <div class="ani">${x.emoji} ${x.name}</div>
+              <div class="delay">Fuerza 11 sor.: ${x.relPct}%</div>
+            </div>
+          `).join("")}
+        </div>
+        <div class="chain-list">${dayCutCache.notesHtml}</div>
+      </div>
+    `;
     return;
   }
 
@@ -1595,15 +1643,15 @@ function renderDayTripleta(list, outTodaySet) {
   ANIMALITOS.forEach(a => { candidateScores[a.name] = 0; });
 
   todayDraws.forEach(draw => {
-    const winCalc = computeSameDayWindowCalls(list, draw.animal, 5);
+    const winCalc = computeSameDayWindowCalls(list, draw.animal, 11);
     const topCalls = winCalc.ranked.slice(0, 3);
     if (topCalls.length > 0) {
       const summaryLine = topCalls.map(c => `${c.name} (${c.pct}%)`).join(", ");
-      chainNotes.push(`• <b>${formatHour(draw.hora)}</b> salió <b>${draw.animal}</b> → en 5 sorteos del día llama: ${summaryLine}`);
+      chainNotes.push(`• <b>${formatHour(draw.hora)}</b> salió <b>${draw.animal}</b> → en 11 sorteos llama: ${summaryLine}`);
     }
-    winCalc.ranked.slice(0, 6).forEach((cand, idx) => {
+    winCalc.ranked.slice(0, 5).forEach((cand, idx) => {
       if (outTodaySet.has(cand.name)) return;
-      const weight = Number(cand.pct) * 1.4 + (6 - idx) * 6;
+      const weight = Number(cand.pct) * 1.5 + (5 - idx) * 7;
       candidateScores[cand.name] += weight;
     });
   });
@@ -1616,38 +1664,53 @@ function renderDayTripleta(list, outTodaySet) {
 
   if (rankedCandidates.length < 3) {
     lastGeneratedTripletaNames = [];
-    container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">No hay suficientes animales pendientes con llamada clara en los próximos 5 sorteos para armar la tripleta del día.</div>`;
+    container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">No hay suficientes animales con señal en la ventana de 11 sorteos para armar la tripleta.</div>`;
     return;
   }
 
-  const picked3 = rankedCandidates.slice(0, 3);
-  lastGeneratedTripletaNames = picked3.map(x => x.name);
+  const top3Raw = rankedCandidates.slice(0, 3);
+  const maxDayScore = Math.max(top3Raw[0]?.dayScore || 1, 1);
 
-  const maxDayScore = Math.max(picked3[0]?.dayScore || 1, 1);
+  const picked3 = top3Raw.map(x => ({
+    num: x.num,
+    name: x.name,
+    emoji: x.emoji,
+    relPct: Math.min(88, Math.max(25, Math.round((x.dayScore / maxDayScore) * 82)))
+  }));
+
+  const notesHtml = chainNotes.slice(-3).join("") || `• Basada en ${todayDraws.length} sorteo(s) de hoy en ventana de 11 sorteos.`;
+
+  dayCutCache = {
+    key: cacheKey,
+    picked: picked3,
+    notesHtml
+  };
+  try {
+    localStorage.setItem(DAY_CUT_TRIPLETA_KEY, JSON.stringify(dayCutCache));
+  } catch (e) {}
+
+  lastGeneratedTripletaNames = picked3.map(x => x.name);
   const copyStr = picked3.map(x => `${x.num} ${x.name}`).join(" - ");
 
   container.innerHTML = `
     <div class="tripleta-card day-builder">
       <div class="tripleta-header">
-        <b>Fecha ${todayISO} • Basada en ${todayDraws.length} sorteo(s) de hoy</b>
+        <b>${corteLabel} • Fija 11 sorteos (${todayISO})</b>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-green-sm" style="padding:4px 8px;font-size:0.7rem;" onclick="saveTripletaToStorage(lastGeneratedTripletaNames, 'Armada del día')">💾 Guardar</button>
+          <button class="btn btn-green-sm" style="padding:4px 8px;font-size:0.7rem;" onclick="saveTripletaToStorage(lastGeneratedTripletaNames, '${corteLabel}')">💾 Guardar</button>
           <button class="btn btn-dark" style="padding:4px 8px;font-size:0.7rem;" onclick="copiarTexto('${copyStr}')">Copiar</button>
         </div>
       </div>
       <div class="tripleta-animals">
-        ${picked3.map(x => {
-          const relPct = Math.min(88, Math.max(22, Math.round((x.dayScore / maxDayScore) * 78)));
-          return `
-            <div class="trip-box">
-              <div class="num">${x.num}</div>
-              <div class="ani">${x.emoji} ${x.name}</div>
-              <div class="delay">Peso 5 sorteos: ${relPct}%</div>
-            </div>
-          `;
-        }).join("")}
+        ${picked3.map(x => `
+          <div class="trip-box">
+            <div class="num">${x.num}</div>
+            <div class="ani">${x.emoji} ${x.name}</div>
+            <div class="delay">Fuerza 11 sor.: ${x.relPct}%</div>
+          </div>
+        `).join("")}
       </div>
-      <div class="chain-list">${chainNotes.slice(-4).join("")}</div>
+      <div class="chain-list">${notesHtml}</div>
     </div>
   `;
 }
@@ -1697,6 +1760,7 @@ function renderPronostico() {
 
   const stats = computeStats(list);
 
+  // Top 10 Mixto intacto: 7 Top local + 3 Cruce
   const viable = ANIMALITOS
     .filter(a => !outTodaySet.has(a.name))
     .map(a => {
