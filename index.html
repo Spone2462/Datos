@@ -1231,13 +1231,11 @@ function renderAnimalStats() {
   document.getElementById("stTotal").textContent = matches.length;
   document.getElementById("animalTotalBadge").textContent = `${matches.length} apariciones de ${list.length} sorteos`;
 
-  // Probabilidad observada y teórica
   const probObs = list.length > 0 ? ((matches.length / list.length) * 100).toFixed(2) : "0.00";
   const probTeo = ((1 / ANIMALITOS.length) * 100).toFixed(2);
   document.getElementById("probObserved").textContent = `${probObs}%`;
   document.getElementById("probTheoretical").textContent = `${probTeo}%`;
 
-  // Probabilidad en la hora seleccionada
   const drawsInHour = list.filter(r => Number(r.hora) === probHour);
   const hitsInHour = matches.filter(r => Number(r.hora) === probHour).length;
   const probHrPct = drawsInHour.length > 0 ? ((hitsInHour / drawsInHour.length) * 100).toFixed(2) : "0.00";
@@ -1352,7 +1350,6 @@ function computeCrossSequence(originKey, targetKey, triggerAnimal, mode) {
       }
     });
   } else {
-    // Siguiente sorteo cronológico en la lotería destino
     let tIdx = 0;
     originList.forEach(src => {
       while (tIdx < targetList.length && targetList[tIdx].ts <= src.ts) {
@@ -1420,7 +1417,6 @@ function renderSecuencias() {
     }).join("");
   }
 
-  // Hot & Cold de la lotería activa superior
   const list = getLottoData();
   const stats = computeStats(list);
   const hot = [...ANIMALITOS].sort((a, b) => stats.freq[b.name] - stats.freq[a.name]).slice(0, 8);
