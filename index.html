@@ -565,7 +565,7 @@
 
 <header>
   <div class="top-row">
-    <div class="brand">🎯 ANIMALITOS PRO <span>V2.4.2</span></div>
+    <div class="brand">🎯 ANIMALITOS PRO <span>V2.4.3</span></div>
     <div class="counter-pill">Registros: <b id="totalCount">0</b></div>
   </div>
   <div class="lotto-tabs">
@@ -613,7 +613,7 @@
       </div>
 
       <div id="todayOutWrap" style="display:none;">
-        <label>Ya salieron en la fecha activa (no se repiten):</label>
+        <label>Ya salieron antes de esta hora en la fecha activa (no se repiten):</label>
         <div class="today-pills" id="todayOutPills"></div>
       </div>
 
@@ -958,6 +958,30 @@ const LOTTO_CONFIG = {
   ruleta:   { label: "Ruleta Activa", hours: [9,10,11,12,13,14,15,16,17,18,19] }
 };
 
+function getLocalTodayISO() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function syncManualDateToToday() {
+  const el = document.getElementById("manFecha");
+  if (!el) return;
+  const today = getLocalTodayISO();
+  if (el.tagName === "SELECT") {
+    const exists = Array.from(el.options).some(opt => opt.value === today);
+    if (!exists) {
+      const opt = document.createElement("option");
+      opt.value = today;
+      opt.textContent = today.split("-").reverse().join("/");
+      el.prepend(opt);
+    }
+  }
+  el.value = today;
+}
+
 function normalizeText(str) {
   return String(str || "")
     .trim()
@@ -1017,7 +1041,11 @@ function loadDB() {
 }
 
 function saveDB() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  } catch (e) {
+    showToast("⚠️ No se pudo guardar en el navegador (espacio lleno)");
+  }
   updateCounters();
 }
 
@@ -1032,8 +1060,7 @@ function saveTripletaToStorage(namesArr, sourceLabel) {
     return;
   }
 
-  const list = getLottoData();
-  const activeDate = list.length > 0 ? list[list.length - 1].fecha : new Date().toISOString().slice(0, 10);
+  const activeDate = getLocalTodayISO();
 
   savedTripleta = {
     loteria: currentLotto,
@@ -1112,6 +1139,7 @@ function setLotto(lottoKey) {
     btn.classList.toggle("active", btn.dataset.lotto === lottoKey);
   });
   document.getElementById("manualLottoTag").textContent = LOTTO_CONFIG[lottoKey].label;
+  syncManualDateToToday();
   populateHourSelects();
   syncCrossPairWithCurrentLotto();
   updateCounters();
@@ -1123,6 +1151,9 @@ function showTab(tabName, btnEl) {
   document.getElementById("sec-" + tabName).classList.add("active");
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
   if (btnEl) btnEl.classList.add("active");
+  if (tabName === "cargar") {
+    syncManualDateToToday();
+  }
   if (tabName === "secuencias") {
     syncSeqAnimalToLatestOrigin();
   }
@@ -1155,15 +1186,24 @@ function populateHourSelects() {
     document.getElementById("probHourSelect").value = prevProbH;
   }
 
+  const todayISO = getLocalTodayISO();
   const list = getLottoData();
-  if (list.length > 0) {
-    const last = list[list.length - 1];
-    const idx = hours.indexOf(Number(last.hora));
+  const todayDraws = list.filter(r => r.fecha === todayISO);
+
+  if (todayDraws.length > 0) {
+    const lastToday = todayDraws[todayDraws.length - 1];
+    const idx = hours.indexOf(Number(lastToday.hora));
     const nextH = (idx >= 0 && idx < hours.length - 1) ? hours[idx + 1] : hours[0];
     document.getElementById("targetHourSelect").value = nextH;
     document.getElementById("manHora").value = nextH;
     if (!hours.includes(prevProbH)) {
       document.getElementById("probHourSelect").value = nextH;
+    }
+  } else {
+    document.getElementById("targetHourSelect").value = hours[0];
+    document.getElementById("manHora").value = hours[0];
+    if (!hours.includes(prevProbH)) {
+      document.getElementById("probHourSelect").value = hours[0];
     }
   }
 }
@@ -1225,6 +1265,7 @@ function importarLoteJSON() {
 
   saveDB();
   document.getElementById("jsonInput").value = "";
+  syncManualDateToToday();
   populateHourSelects();
   userPickedSeqAnimal = false;
   syncSeqAnimalToLatestOrigin();
@@ -1257,7 +1298,7 @@ function agregarManual() {
   userPickedSeqAnimal = false;
   syncSeqAnimalToLatestOrigin();
   renderAll();
-  showToast(`✅ Guardado: ${aniObj.num} ${aniObj.name} (${formatHour(hora)})`);
+  showToast(`✅ Guardado: ${aniObj.num} ${aniObj.name} (${fecha} • ${formatHour(hora)})`);
 }
 
 function eliminarRegistro(loteria, fecha, hora) {
@@ -1271,9 +1312,8 @@ function exportarRespaldo() {
   const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const today = new Date().toISOString().slice(0, 10);
   a.href = url;
-  a.download = `respaldo_animalitos_${today}.json`;
+  a.download = `respaldo_animalitos_${getLocalTodayISO()}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast("Respaldo descargado");
@@ -1414,7 +1454,6 @@ function computeSameDayWindowCalls(list, triggerAnimal, windowSpan = 5) {
   return { triggers, ranked };
 }
 
-// Obtiene los mejores candidatos desde la secuencia cruzada activa hacia currentLotto
 function getCrossCandidatesForCurrentLotto(outTodaySet) {
   const originKey = document.getElementById("seqOriginLotto")?.value || (currentLotto === "ruleta" ? "ruleta" : "granjita");
   const targetKey = currentLotto;
@@ -1422,7 +1461,6 @@ function getCrossCandidatesForCurrentLotto(outTodaySet) {
   const windowMode = document.getElementById("seqWindowSelect")?.value || "5";
   const hourFilter = document.getElementById("seqHourFilter")?.value || "all";
 
-  const originList = getLottoData(originKey);
   const effectiveOrigin = originKey === targetKey
     ? (currentLotto === "granjita" ? "lotto" : "granjita")
     : originKey;
@@ -1464,6 +1502,7 @@ function getCrossCandidatesForCurrentLotto(outTodaySet) {
 function renderSavedTripleta(list, outTodaySet, stats, targetHour) {
   const container = document.getElementById("savedTripletaContainer");
   const badge = document.getElementById("savedTripBadge");
+  const todayISO = getLocalTodayISO();
 
   if (!savedTripleta || !Array.isArray(savedTripleta.animals) || savedTripleta.animals.length < 3) {
     badge.textContent = "Sin guardar";
@@ -1484,8 +1523,7 @@ function renderSavedTripleta(list, outTodaySet, stats, targetHour) {
     return;
   }
 
-  const latestDate = list.length > 0 ? list[list.length - 1].fecha : savedTripleta.fecha;
-  const sameDayActive = savedTripleta.loteria === currentLotto && savedTripleta.fecha === latestDate;
+  const sameDayActive = savedTripleta.loteria === currentLotto && savedTripleta.fecha === todayISO;
   badge.textContent = `${LOTTO_CONFIG[savedTripleta.loteria]?.label || savedTripleta.loteria} • ${savedTripleta.fecha}`;
 
   let hitsCount = 0;
@@ -1517,7 +1555,7 @@ function renderSavedTripleta(list, outTodaySet, stats, targetHour) {
   container.innerHTML = `
     <div class="tripleta-card saved-box">
       <div class="tripleta-header">
-        <b>Aciertos en jornada (${latestDate}): ${hitsCount}/3 • ${savedTripleta.source || "Guardada"}</b>
+        <b>Aciertos en jornada (${todayISO}): ${hitsCount}/3 • ${savedTripleta.source || "Guardada"}</b>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-dark" style="padding:4px 8px;font-size:0.7rem;" onclick="copiarTexto('${savedTripleta.animals.join(" - ")}')">Copiar</button>
           <button class="btn btn-danger" style="padding:4px 8px;font-size:0.7rem;" onclick="clearSavedTripleta()">Borrar</button>
@@ -1537,16 +1575,18 @@ function saveTripletaFromSelectors() {
 
 function renderDayTripleta(list, outTodaySet) {
   const container = document.getElementById("dayTripletaContainer");
+  const todayISO = getLocalTodayISO();
+
   if (list.length === 0) {
     container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">Carga resultados para armar la tripleta según lo que ya salió en el día.</div>`;
     return;
   }
 
-  const latestDate = list[list.length - 1].fecha;
-  const todayDraws = list.filter(r => r.fecha === latestDate);
+  const todayDraws = list.filter(r => r.fecha === todayISO);
 
   if (todayDraws.length === 0) {
-    container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">Sin sorteos registrados en ${latestDate}.</div>`;
+    lastGeneratedTripletaNames = [];
+    container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">Aún no hay sorteos registrados hoy (${todayISO}) para armar la tripleta del día.</div>`;
     return;
   }
 
@@ -1589,7 +1629,7 @@ function renderDayTripleta(list, outTodaySet) {
   container.innerHTML = `
     <div class="tripleta-card day-builder">
       <div class="tripleta-header">
-        <b>Fecha ${latestDate} • Basada en ${todayDraws.length} sorteo(s) del día</b>
+        <b>Fecha ${todayISO} • Basada en ${todayDraws.length} sorteo(s) de hoy</b>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-green-sm" style="padding:4px 8px;font-size:0.7rem;" onclick="saveTripletaToStorage(lastGeneratedTripletaNames, 'Armada del día')">💾 Guardar</button>
           <button class="btn btn-dark" style="padding:4px 8px;font-size:0.7rem;" onclick="copiarTexto('${copyStr}')">Copiar</button>
@@ -1620,6 +1660,7 @@ function renderPronostico() {
   const outWrap = document.getElementById("todayOutWrap");
   const outPills = document.getElementById("todayOutPills");
   const noteEl = document.getElementById("leagueSummaryNote");
+  const todayISO = getLocalTodayISO();
 
   if (list.length === 0) {
     lastBox.textContent = "Sin datos cargados";
@@ -1638,8 +1679,10 @@ function renderPronostico() {
   const targetHour = Number(document.getElementById("targetHourSelect").value);
   document.getElementById("nextDrawLabel").textContent = `Para: ${formatHour(targetHour)}`;
 
-  const latestDate = last.fecha;
-  const outToday = list.filter(r => r.fecha === latestDate).map(r => r.animal);
+  // Solo animales ya salidos en la fecha actual en horas anteriores a la hora evaluada
+  const outToday = list
+    .filter(r => r.fecha === todayISO && Number(r.hora) < targetHour)
+    .map(r => r.animal);
   const outTodaySet = new Set(outToday);
 
   if (outToday.length > 0) {
@@ -1654,7 +1697,6 @@ function renderPronostico() {
 
   const stats = computeStats(list);
 
-  // Candidatos viables de la lotería activa (sin repetidos de hoy y con señal real)
   const viable = ANIMALITOS
     .filter(a => !outTodaySet.has(a.name))
     .map(a => {
@@ -1701,7 +1743,6 @@ function renderPronostico() {
     .filter(Boolean)
     .sort((a, b) => b.score - a.score);
 
-  // Liga: 7 del Top local + hasta 3 del Cruce con mayor potencial (sin repetir de hoy ni duplicar)
   const top7 = viable.slice(0, 7);
   const usedNames = new Set(top7.map(x => x.name));
 
@@ -1712,7 +1753,6 @@ function renderPronostico() {
 
   cross3.forEach(c => usedNames.add(c.name));
 
-  // Si sobran huecos para completar 10, rellenar con los siguientes viables del Top local
   const remainingFill = viable
     .filter(v => !usedNames.has(v.name))
     .slice(0, Math.max(0, 10 - (top7.length + cross3.length)));
@@ -2229,8 +2269,15 @@ function renderAll() {
   renderHistory();
 }
 
+// Refrescar fecha de hoy al volver a la pestaña
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    syncManualDateToToday();
+  }
+});
+
 // Arranque inicial
-document.getElementById("manFecha").value = new Date().toISOString().slice(0, 10);
+syncManualDateToToday();
 populateAnimalSelects();
 loadDB();
 setLotto("lotto");
