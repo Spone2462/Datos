@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Animalitos Pro • Estadísticas & Pronósticos</title>
+<style>
+  :root {
+    --bg: #0b0f17;
+    --card: #131a26;
+    --card2: #192233;
+    --border: #243047;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --accent: #00e676;
+    --accent-dim: rgba(0, 230, 118, 0.14);
+    --blue: #38bdf8;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --purple: #a78bfa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.4;
+    padding-bottom: 40px;
+  }
+  header {
+    background: linear-gradient(180deg, #111827 0%, #0b0f17 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px 10px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .brand {
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand span {
+    background: var(--accent);
+    color: #051b11;
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 900;
+  }
+  .counter-pill {
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--card2);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .counter-pill b { color: var(--accent); }
+
+  /* Tabs Loterías */
+  .lotto-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .lotto-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 4px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s;
+    text-align: center;
+  }
+  .lotto-btn.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .lotto-btn small {
+    display: block;
+    font-size: 0.64rem;
+    font-weight: 500;
+    opacity: 0.85;
+  }
+
+  /* Sub-navegación */
+  .nav-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 10px 14px 4px;
+    overflow-x: auto;
+  }
+  .nav-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .nav-btn.active {
+    background: var(--blue);
+    color: #06131f;
+    border-color: var(--blue);
+    font-weight: 800;
+  }
+
+  .container {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 10px 14px;
+  }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 0.86rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--blue);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card-title span.sub {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: none;
+    font-weight: 500;
+  }
+
+  /* Formularios */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  input, select, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 10px;
+    border-radius: 9px;
+    font-size: 0.85rem;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+  textarea {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+    min-height: 110px;
+    resize: vertical;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 9px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: 0.15s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #041d11; width: 100%; }
+  .btn-blue { background: var(--blue); color: #051829; }
+  .btn-dark { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.35); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+
+  /* Pronóstico y Top 10 */
+  .last-draw-banner {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .today-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+  .pill-out {
+    background: rgba(248, 113, 113, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    color: #fca5a5;
+    font-size: 0.7rem;
+    padding: 3px 7px;
+    border-radius: 6px;
+    text-decoration: line-through;
+  }
+
+  .top10-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  @media (max-width: 480px) {
+    .top10-list { grid-template-columns: 1fr; }
+  }
+  .pred-item {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .pred-item.rank-1 { border-color: var(--accent); background: rgba(0, 230, 118, 0.08); }
+  .pred-left { display: flex; align-items: center; gap: 9px; }
+  .pred-rank {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rank-1 .pred-rank { background: var(--accent); color: #041d11; }
+  .pred-num {
+    font-weight: 900;
+    font-size: 0.92rem;
+    color: var(--amber);
+    min-width: 24px;
+  }
+  .pred-name { font-weight: 700; font-size: 0.86rem; }
+  .pred-meta { font-size: 0.68rem; color: var(--muted); }
+  .pred-score {
+    text-align: right;
+    font-weight: 800;
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+
+  /* Tripletas */
+  .tripleta-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 11px;
+    margin-bottom: 8px;
+  }
+  .tripleta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .tripleta-animals {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .trip-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 6px;
+    text-align: center;
+  }
+  .trip-box .num { color: var(--accent); font-weight: 900; font-size: 0.85rem; }
+  .trip-box .ani { font-weight: 700; font-size: 0.76rem; }
+  .trip-box .delay { font-size: 0.64rem; color: var(--muted); }
+
+  /* Gráfico de Barras estilo RA Pronósticos */
+  .chart-wrap {
+    margin-top: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 10px 8px;
+    position: relative;
+  }
+  .bars-grid {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 140px;
+    gap: 4px;
+    padding-top: 18px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .expected-line {
+    position: absolute;
+    left: 0; right: 0;
+    border-top: 1.5px dashed var(--amber);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .expected-label {
+    position: absolute;
+    right: 4px;
+    top: -16px;
+    font-size: 0.62rem;
+    color: var(--amber);
+    background: var(--bg);
+    padding: 0 4px;
+  }
+  .bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .bar-val {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .bar-fill {
+    width: 100%;
+    max-width: 24px;
+    background: linear-gradient(180deg, var(--accent) 0%, #059669 100%);
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+    transition: height 0.25s;
+  }
+  .bar-fill.hot { background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%); }
+  .bar-lbl {
+    font-size: 0.62rem;
+    color: var(--muted);
+    margin-top: 5px;
+    text-align: center;
+  }
+
+  .stat-boxes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .s-box {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 8px;
+    text-align: center;
+  }
+  .s-box .v { font-size: 1rem; font-weight: 900; color: var(--accent); }
+  .s-box .l { font-size: 0.68rem; color: var(--muted); }
+
+  /* Tabla Historial y Secuencias */
+  .seq-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--card2);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+  }
+  .badge {
+    background: var(--accent-dim);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 0.72rem;
+  }
+  .hist-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+  .hist-table th, .hist-table td {
+    padding: 7px 6px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .hist-table th { color: var(--muted); font-size: 0.7rem; text-transform: uppercase; }
+  .toast {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    z-index: 999;
+    display: none;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top-row">
+    <div class="brand">🎯 ANIMALITOS PRO <span>V2</span></div>
+    <div class="counter-pill">Registros: <b id="totalCount">0</b></div>
+  </div>
+  <div class="lotto-tabs">
+    <button class="lotto-btn active" data-lotto="lotto" onclick="setLotto('lotto')">
+      Lotto Activo
+      <small>8:00 AM – 7:00 PM</small>
+    </button>
+    <button class="lotto-btn" data-lotto="granjita" onclick="setLotto('granjita')">
+      La Granjita
+      <small>8:00 AM – 7:00 PM</small>
+    </button>
+    <button class="lotto-btn" data-lotto="ruleta" onclick="setLotto('ruleta')">
+      Ruleta Activa
+      <small>9:00 AM – 7:00 PM</small>
+    </button>
+  </div>
+</header>
+
+<div class="nav-tabs">
+  <button class="nav-btn active" onclick="showTab('pronostico', this)">🔮 Pronóstico & Tripletas</button>
+  <button class="nav-btn" onclick="showTab('analisis', this)">📊 Análisis por Animal</button>
+  <button class="nav-btn" onclick="showTab('secuencias', this)">🔗 Secuencias & Ranking</button>
+  <button class="nav-btn" onclick="showTab('cargar', this)">📥 Cargar / JSON</button>
+</div>
+
+<div class="container">
+
+  <!-- SECCIÓN 1: PRONÓSTICO & TRIPLETAS -->
+  <div id="sec-pronostico" class="section active">
+    <div class="card">
+      <div class="card-title">
+        <span>🎯 Top 10 Próximo Sorteo</span>
+        <span class="sub" id="nextDrawLabel">Siguiente hora: --</span>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:10px;">
+        <div>
+          <label>Evaluar para la hora:</label>
+          <select id="targetHourSelect" onchange="renderPronostico()"></select>
+        </div>
+        <div>
+          <label>Último resultado registrado:</label>
+          <div id="lastResultBox" style="padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:9px;font-size:0.82rem;font-weight:700;color:var(--amber);">Sin datos</div>
+        </div>
+      </div>
+
+      <div id="todayOutWrap" style="display:none;">
+        <label>Ya salieron hoy (descartados/enfriados):</label>
+        <div class="today-pills" id="todayOutPills"></div>
+      </div>
+
+      <div class="top10-list" id="top10Container"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>🎰 Tripletas (Ciclo 11 Sorteos)</span>
+        <span class="sub">Alta probabilidad conjunta</span>
+      </div>
+      <div id="tripletasContainer"></div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 2: ANÁLISIS POR ANIMAL (ESTILO RA PRONÓSTICOS) -->
+  <div id="sec-analisis" class="section">
+    <div class="card">
+      <div class="card-title">
+        <span>📈 Frecuencia Detallada por Animal</span>
+        <span class="sub" id="animalTotalBadge">0 apariciones</span>
+      </div>
+
+      <div style="margin-bottom:10px;">
+        <label>Selecciona el Animalito (Orden oficial 0 / 00 al 36):</label>
+        <select id="animalSelect" onchange="renderAnimalStats()"></select>
+      </div>
+
+      <div class="stat-boxes">
+        <div class="s-box">
+          <div class="v" id="stTotal">0</div>
+          <div class="l">Salidas Totales</div>
+        </div>
+        <div class="s-box">
+          <div class="v" id="stDelay" style="color:var(--amber)">0</div>
+          <div class="l">Sorteos sin salir</div>
+        </div>
+        <div class="s-box">
+          <div class="v" id="stLast" style="font-size:0.76rem;color:var(--blue);padding-top:3px;">--</div>
+          <div class="l">Última salida</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <div style="font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:4px;">Salidas por Hora del Día</div>
+        <div class="bars-grid" id="hourChart"></div>
+      </div>
+
+      <div class="chart-wrap">
+        <div style="font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:4px;">Por Parte del Día</div>
+        <div class="stat-boxes" id="partOfDayBoxes"></div>
+      </div>
+
+      <div class="chart-wrap">
+        <div style="font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:4px;">Por Día de la Semana</div>
+        <div class="bars-grid" id="weekdayChart" style="height:110px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 3: SECUENCIAS & RANKING -->
+  <div id="sec-secuencias" class="section">
+    <div class="card">
+      <div class="card-title">
+        <span>🔗 Secuencias (¿Qué sale después de...?)</span>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label>Si acaba de salir:</label>
+        <select id="seqAnimalSelect" onchange="renderSecuencias()"></select>
+      </div>
+      <div id="seqResults"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span>🔥 Más Salidos</span></div>
+        <div id="hotList"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span>❄️ Más Atrasados</span></div>
+        <div id="coldList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 4: CARGAR / JSON / MANUAL -->
+  <div id="sec-cargar" class="section">
+    <!-- Carga masiva JSON -->
+    <div class="card">
+      <div class="card-title">
+        <span>⚡ Carga Masiva por JSON</span>
+        <span class="sub">Auto-corrige números</span>
+      </div>
+      <label>Pega aquí el bloque JSON (los números se asignan automáticamente según la tabla oficial):</label>
+      <textarea id="jsonInput" placeholder='[{"loteria":"lotto","fecha":"2026-02-02","hora":8,"numero":"28","animal":"Zamuro"}, ...]'></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="importarLoteJSON()">➕ Agregar y limpiar caja</button>
+      </div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:6px;">
+        * Evita duplicados automáticamente (misma lotería + fecha + hora) y fuerza el número oficial exacto de cada animal (ej. 35 = Jirafa, 00 = Ballena, 03 = Ciempiés).
+      </div>
+    </div>
+
+    <!-- Carga Manual -->
+    <div class="card">
+      <div class="card-title">
+        <span>✍️ Registro Manual (Al día)</span>
+        <span class="sub" id="manualLottoTag">Lotto Activo</span>
+      </div>
+      <div class="grid-3" style="margin-bottom:10px;">
+        <div>
+          <label>Fecha:</label>
+          <input type="date" id="manFecha">
+        </div>
+        <div>
+          <label>Hora del sorteo:</label>
+          <select id="manHora"></select>
+        </div>
+        <div>
+          <label>Animalito:</label>
+          <select id="manAnimal"></select>
+        </div>
+      </div>
+      <button class="btn btn-blue" style="width:100%;" onclick="agregarManual()">Guardar Resultado Manual</button>
+    </div>
+
+    <!-- Respaldo y Mantenimiento -->
+    <div class="card">
+      <div class="card-title"><span>💾 Respaldo y Limpieza</span></div>
+      <div class="btn-row">
+        <button class="btn btn-dark" onclick="exportarRespaldo()">⬇️ Descargar Respaldo (.json)</button>
+        <label class="btn btn-dark" style="margin:0;cursor:pointer;">
+          ⬆️ Restaurar Archivo (.json)
+          <input type="file" accept=".json" style="display:none;" onchange="restaurarArchivo(event)">
+        </label>
+        <button class="btn btn-danger" onclick="borrarTodo()">🗑️ Borrar Base de Datos</button>
+      </div>
+    </div>
+
+    <!-- Últimos 25 registros -->
+    <div class="card">
+      <div class="card-title">
+        <span>🕒 Últimos 25 Registros</span>
+        <span class="sub" id="histSub">Ordenados por fecha/hora</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="hist-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>N°</th>
+              <th>Animal</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// TABLA OFICIAL BLINDADA (Imagen 1000853644.png - 0, 00, 1..36)
+// ============================================================
+const ANIMALITOS = [
+  { num: "0",  name: "Delfin",   emoji: "🐬" },
+  { num: "00", name: "Ballena",  emoji: "🐋" },
+  { num: "01", name: "Carnero",  emoji: "🐏" },
+  { num: "02", name: "Toro",     emoji: "🐂" },
+  { num: "03", name: "Ciempies", emoji: "🐛" },
+  { num: "04", name: "Alacran",  emoji: "🦂" },
+  { num: "05", name: "Leon",     emoji: "🦁" },
+  { num: "06", name: "Rana",     emoji: "🐸" },
+  { num: "07", name: "Perico",   emoji: "🦜" },
+  { num: "08", name: "Raton",    emoji: "🐭" },
+  { num: "09", name: "Aguila",   emoji: "🦅" },
+  { num: "10", name: "Tigre",    emoji: "🐯" },
+  { num: "11", name: "Gato",     emoji: "🐱" },
+  { num: "12", name: "Caballo",  emoji: "🐴" },
+  { num: "13", name: "Mono",     emoji: "🐒" },
+  { num: "14", name: "Paloma",   emoji: "🕊️" },
+  { num: "15", name: "Zorro",    emoji: "🦊" },
+  { num: "16", name: "Oso",      emoji: "🐻" },
+  { num: "17", name: "Pavo",     emoji: "🦃" },
+  { num: "18", name: "Burro",    emoji: "🫏" },
+  { num: "19", name: "Chivo",    emoji: "🐐" },
+  { num: "20", name: "Cochino",  emoji: "🐷" },
+  { num: "21", name: "Gallo",    emoji: "🐓" },
+  { num: "22", name: "Camello",  emoji: "🐪" },
+  { num: "23", name: "Cebra",    emoji: "🦓" },
+  { num: "24", name: "Iguana",   emoji: "🦎" },
+  { num: "25", name: "Gallina",  emoji: "🐔" },
+  { num: "26", name: "Vaca",     emoji: "🐄" },
+  { num: "27", name: "Perro",    emoji: "🐶" },
+  { num: "28", name: "Zamuro",   emoji: "🦅" },
+  { num: "29", name: "Elefante", emoji: "🐘" },
+  { num: "30", name: "Caiman",   emoji: "🐊" },
+  { num: "31", name: "Lapa",     emoji: "🦫" },
+  { num: "32", name: "Ardilla",  emoji: "🐿️" },
+  { num: "33", name: "Pescado",  emoji: "🐟" },
+  { num: "34", name: "Venado",   emoji: "🦌" },
+  { num: "35", name: "Jirafa",   emoji: "🦒" },
+  { num: "36", name: "Culebra",  emoji: "🐍" }
+];
+
+const STORAGE_KEY = "animalitos_pro_v2_db";
+let currentLotto = "lotto"; // 'lotto' | 'granjita' | 'ruleta'
+let db = [];
+
+const LOTTO_CONFIG = {
+  lotto:    { label: "Lotto Activo",  hours: [8,9,10,11,12,13,14,15,16,17,18,19] },
+  granjita: { label: "La Granjita",   hours: [8,9,10,11,12,13,14,15,16,17,18,19] },
+  ruleta:   { label: "Ruleta Activa", hours: [9,10,11,12,13,14,15,16,17,18,19] }
+};
+
+function normalizeText(str) {
+  return String(str || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+}
+
+function findAnimalByName(name) {
+  const clean = normalizeText(name);
+  return ANIMALITOS.find(a => normalizeText(a.name) === clean) || null;
+}
+
+function findAnimalByNum(num) {
+  const s = String(num || "").trim();
+  if (s === "0") return ANIMALITOS[0];
+  if (s === "00") return ANIMALITOS[1];
+  const padded = s.padStart(2, "0");
+  return ANIMALITOS.find(a => a.num === padded) || null;
+}
+
+function formatHour(h) {
+  const hr = Number(h);
+  if (hr === 12) return "12:00 PM";
+  if (hr > 12) return (hr - 12) + ":00 PM";
+  return hr + ":00 AM";
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.style.display = "none"; }, 2800);
+}
+
+// ============================================================
+// INICIALIZACIÓN Y PERSISTENCIA
+// ============================================================
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    db = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    db = [];
+  }
+}
+
+function saveDB() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  updateCounters();
+}
+
+function updateCounters() {
+  const list = getLottoData();
+  document.getElementById("totalCount").textContent = list.length + " (" + db.length + " total)";
+}
+
+function getLottoData(lottoKey = currentLotto) {
+  return db
+    .filter(r => r.loteria === lottoKey)
+    .sort((a, b) => {
+      if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+      return Number(a.hora) - Number(b.hora);
+    });
+}
+
+function setLotto(lottoKey) {
+  currentLotto = lottoKey;
+  document.querySelectorAll(".lotto-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.lotto === lottoKey);
+  });
+  document.getElementById("manualLottoTag").textContent = LOTTO_CONFIG[lottoKey].label;
+  populateHourSelects();
+  updateCounters();
+  renderAll();
+}
+
+function showTab(tabName, btnEl) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById("sec-" + tabName).classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  if (btnEl) btnEl.classList.add("active");
+  renderAll();
+}
+
+function populateAnimalSelects() {
+  const selects = ["animalSelect", "seqAnimalSelect", "manAnimal"];
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = ANIMALITOS.map(a =>
+      `<option value="${a.name}">${a.num} - ${a.emoji} ${a.name}</option>`
+    ).join("");
+  });
+}
+
+function populateHourSelects() {
+  const hours = LOTTO_CONFIG[currentLotto].hours;
+  const html = hours.map(h => `<option value="${h}">${formatHour(h)}</option>`).join("");
+  document.getElementById("manHora").innerHTML = html;
+  document.getElementById("targetHourSelect").innerHTML = html;
+
+  // Sugerir próxima hora automáticamente según último registro de hoy o último general
+  const list = getLottoData();
+  if (list.length > 0) {
+    const last = list[list.length - 1];
+    const idx = hours.indexOf(Number(last.hora));
+    const nextH = (idx >= 0 && idx < hours.length - 1) ? hours[idx + 1] : hours[0];
+    document.getElementById("targetHourSelect").value = nextH;
+    document.getElementById("manHora").value = nextH;
+  }
+}
+
+// ============================================================
+// IMPORTACIÓN JSON & CARGA MANUAL
+// ============================================================
+function importarLoteJSON() {
+  const raw = document.getElementById("jsonInput").value.trim();
+  if (!raw) {
+    showToast("Pega primero el bloque JSON");
+    return;
+  }
+  let arr;
+  try {
+    arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) throw new Error("Debe ser un array [...]");
+  } catch (e) {
+    alert("Error en formato JSON: " + e.message);
+    return;
+  }
+
+  const existingKeys = new Set(db.map(r => `${r.loteria}|${r.fecha}|${r.hora}`));
+  let added = 0;
+  let skipped = 0;
+
+  arr.forEach(item => {
+    const lot = (item.loteria || currentLotto).toLowerCase();
+    const fecha = String(item.fecha || "").trim();
+    const hora = Number(item.hora);
+    let aniObj = findAnimalByName(item.animal);
+    if (!aniObj && item.numero !== undefined && item.numero !== "") {
+      aniObj = findAnimalByNum(item.numero);
+    }
+    if (!fecha || isNaN(hora) || !aniObj) {
+      skipped++;
+      return;
+    }
+    // Validar horario de Ruleta Activa (9am a 7pm)
+    if (lot === "ruleta" && hora < 9) {
+      skipped++;
+      return;
+    }
+
+    const key = `${lot}|${fecha}|${hora}`;
+    if (existingKeys.has(key)) {
+      skipped++;
+      return;
+    }
+    existingKeys.add(key);
+    db.push({
+      loteria: lot,
+      fecha: fecha,
+      hora: hora,
+      numero: aniObj.num,
+      animal: aniObj.name
+    });
+    added++;
+  });
+
+  saveDB();
+  document.getElementById("jsonInput").value = "";
+  populateHourSelects();
+  renderAll();
+  showToast(`✅ Agregados: ${added} | Omitidos/duplicados: ${skipped}`);
+}
+
+function agregarManual() {
+  const fecha = document.getElementById("manFecha").value;
+  const hora = Number(document.getElementById("manHora").value);
+  const animalName = document.getElementById("manAnimal").value;
+  const aniObj = findAnimalByName(animalName);
+
+  if (!fecha || !aniObj) {
+    showToast("Completa fecha y animal");
+    return;
+  }
+
+  // Reemplazar si ya existe esa misma fecha + hora en esa lotería
+  db = db.filter(r => !(r.loteria === currentLotto && r.fecha === fecha && Number(r.hora) === hora));
+  db.push({
+    loteria: currentLotto,
+    fecha: fecha,
+    hora: hora,
+    numero: aniObj.num,
+    animal: aniObj.name
+  });
+
+  saveDB();
+  populateHourSelects();
+  renderAll();
+  showToast(`✅ Guardado: ${aniObj.num} ${aniObj.name} (${formatHour(hora)})`);
+}
+
+function eliminarRegistro(loteria, fecha, hora) {
+  db = db.filter(r => !(r.loteria === loteria && r.fecha === fecha && Number(r.hora) === Number(hora)));
+  saveDB();
+  renderAll();
+  showToast("Registro eliminado");
+}
+
+function exportarRespaldo() {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const today = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `respaldo_animalitos_${today}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("Respaldo descargado");
+}
+
+function restaurarArchivo(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    document.getElementById("jsonInput").value = ev.target.result;
+    importarLoteJSON();
+  };
+  reader.readAsText(file);
+}
+
+function borrarTodo() {
+  if (!confirm("⚠️ ¿Seguro que quieres borrar TODOS los registros guardados en el navegador?")) return;
+  if (!confirm("Confirma por segunda vez: se vaciará la base de datos local.")) return;
+  db = [];
+  localStorage.removeItem(STORAGE_KEY);
+  updateCounters();
+  renderAll();
+  showToast("Base de datos borrada por completo");
+}
+
+// ============================================================
+// MOTOR ESTADÍSTICO: PRONÓSTICOS (TOP 10) Y TRIPLETAS (11 SORTEOS)
+// ============================================================
+function computeStats(list) {
+  const total = list.length;
+  const freq = {};
+  const hourFreq = {};
+  const lastIdx = {};
+  const transitions = {}; // transitions[prevAnimal][nextAnimal] = count
+
+  ANIMALITOS.forEach(a => {
+    freq[a.name] = 0;
+    hourFreq[a.name] = {};
+    lastIdx[a.name] = -1;
+    transitions[a.name] = {};
+  });
+
+  list.forEach((r, idx) => {
+    if (freq[r.animal] !== undefined) {
+      freq[r.animal]++;
+      hourFreq[r.animal][r.hora] = (hourFreq[r.animal][r.hora] || 0) + 1;
+      lastIdx[r.animal] = idx;
+    }
+    if (idx > 0) {
+      const prev = list[idx - 1].animal;
+      if (transitions[prev]) {
+        transitions[prev][r.animal] = (transitions[prev][r.animal] || 0) + 1;
+      }
+    }
+  });
+
+  const delays = {};
+  ANIMALITOS.forEach(a => {
+    delays[a.name] = lastIdx[a.name] === -1 ? total : (total - 1 - lastIdx[a.name]);
+  });
+
+  return { total, freq, hourFreq, delays, transitions };
+}
+
+function renderPronostico() {
+  const list = getLottoData();
+  const top10El = document.getElementById("top10Container");
+  const tripEl = document.getElementById("tripletasContainer");
+  const lastBox = document.getElementById("lastResultBox");
+  const outWrap = document.getElementById("todayOutWrap");
+  const outPills = document.getElementById("todayOutPills");
+
+  if (list.length === 0) {
+    lastBox.textContent = "Sin datos cargados";
+    outWrap.style.display = "none";
+    top10El.innerHTML = `<div style="color:var(--muted);font-size:0.8rem;">Carga resultados en la pestaña "Cargar / JSON" para generar pronósticos.</div>`;
+    tripEl.innerHTML = "";
+    return;
+  }
+
+  const last = list[list.length - 1];
+  const lastAni = findAnimalByName(last.animal) || { num: last.numero, emoji: "" };
+  lastBox.textContent = `${lastAni.num} ${last.animal} (${last.fecha} • ${formatHour(last.hora)})`;
+
+  const targetHour = Number(document.getElementById("targetHourSelect").value);
+  document.getElementById("nextDrawLabel").textContent = `Para: ${formatHour(targetHour)}`;
+
+  // Animales que ya salieron en la fecha del último registro
+  const latestDate = last.fecha;
+  const outToday = list.filter(r => r.fecha === latestDate).map(r => r.animal);
+  const outTodaySet = new Set(outToday);
+
+  if (outToday.length > 0) {
+    outWrap.style.display = "block";
+    outPills.innerHTML = outToday.map(name => {
+      const a = findAnimalByName(name);
+      return `<span class="pill-out">${a ? a.num : ""} ${name}</span>`;
+    }).join("");
+  } else {
+    outWrap.style.display = "none";
+  }
+
+  const stats = computeStats(list);
+  const avgDelay = 38;
+
+  // Puntuación ponderada para el próximo sorteo
+  const scored = ANIMALITOS.map(a => {
+    const hHits = stats.hourFreq[a.name][targetHour] || 0;
+    const seqHits = (stats.transitions[last.animal] && stats.transitions[last.animal][a.name]) || 0;
+    const delay = stats.delays[a.name];
+    const totalHits = stats.freq[a.name];
+
+    // Penalizar repetición inmediata el mismo día
+    const sameDayPenalty = outTodaySet.has(a.name) ? 0.55 : 1.0;
+
+    // Score combinado: deuda (atraso) + afinidad horaria + secuencia tras último animal + frecuencia base
+    const delayScore = Math.min(delay / avgDelay, 2.2) * 38;
+    const hourScore = hHits * 11;
+    const seqScore = seqHits * 14;
+    const freqScore = (totalHits / Math.max(stats.total, 1)) * 120;
+
+    const rawScore = (delayScore + hourScore + seqScore + freqScore) * sameDayPenalty;
+
+    return {
+      ...a,
+      score: rawScore,
+      delay,
+      hHits,
+      seqHits,
+      outToday: outTodaySet.has(a.name)
+    };
+  }).sort((a, b) => b.score - a.score);
+
+  const maxScore = scored[0]?.score || 1;
+  const top10 = scored.slice(0, 10);
+
+  top10El.innerHTML = top10.map((item, i) => {
+    const pct = Math.min(96, Math.max(52, Math.round((item.score / maxScore) * 92)));
+    return `
+      <div class="pred-item ${i === 0 ? "rank-1" : ""}">
+        <div class="pred-left">
+          <div class="pred-rank">${i + 1}</div>
+          <div>
+            <div><span class="pred-num">${item.num}</span> <span class="pred-name">${item.emoji} ${item.name}</span></div>
+            <div class="pred-meta">Atraso: ${item.delay} • Hora: ${item.hHits}x • Sec: ${item.seqHits}x</div>
+          </div>
+        </div>
+        <div class="pred-score">${pct}%</div>
+      </div>
+    `;
+  }).join("");
+
+  // ============================================================
+  // TRIPLETAS (3 animales con alta probabilidad en ciclo de 11 sorteos)
+  // ============================================================
+  // Priorizamos animales que no han salido hoy y tienen atraso maduro (entre 18 y 75 sorteos) o fuerte tendencia
+  const candidates = scored.filter(a => !a.outToday);
+  const pool = candidates.length >= 9 ? candidates : scored;
+
+  const tripletas = [
+    { title: "Tripleta #1 • Deuda + Hora", items: [pool[0], pool[1], pool[2]] },
+    { title: "Tripleta #2 • Secuencia + Ciclo", items: [pool[0], pool[3], pool[4]] },
+    { title: "Tripleta #3 • Cobertura 11 Sorteos", items: [pool[1], pool[5], pool[6]] }
+  ];
+
+  tripEl.innerHTML = tripletas.map((t, idx) => {
+    const copyStr = t.items.map(x => `${x.num} ${x.name}`).join(" - ");
+    return `
+      <div class="tripleta-card">
+        <div class="tripleta-header">
+          <b>${t.title}</b>
+          <button class="btn btn-dark" style="padding:3px 8px;font-size:0.7rem;" onclick="copiarTexto('${copyStr}')">Copiar</button>
+        </div>
+        <div class="tripleta-animals">
+          ${t.items.map(x => `
+            <div class="trip-box">
+              <div class="num">${x.num}</div>
+              <div class="ani">${x.emoji} ${x.name}</div>
+              <div class="delay">${x.delay} sin salir</div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function copiarTexto(txt) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt);
+    showToast("Copiado: " + txt);
+  }
+}
+
+// ============================================================
+// ANÁLISIS POR ANIMAL (GRÁFICO DE BARRAS ESTILO VIDEO)
+// ============================================================
+function renderAnimalStats() {
+  const list = getLottoData();
+  const selectedName = document.getElementById("animalSelect").value;
+  const hours = LOTTO_CONFIG[currentLotto].hours;
+
+  const matches = list.filter(r => r.animal === selectedName);
+  document.getElementById("stTotal").textContent = matches.length;
+  document.getElementById("animalTotalBadge").textContent = `${matches.length} apariciones de ${list.length} sorteos`;
+
+  // Atraso y última salida
+  let delay = list.length;
+  let lastStr = "Nunca";
+  for (let i = list.length - 1; i >= 0; i--) {
+    if (list[i].animal === selectedName) {
+      delay = list.length - 1 - i;
+      lastStr = `${list[i].fecha.slice(5)} (${formatHour(list[i].hora)})`;
+      break;
+    }
+  }
+  document.getElementById("stDelay").textContent = delay;
+  document.getElementById("stLast").textContent = lastStr;
+
+  // Barras por hora
+  const byHour = {};
+  hours.forEach(h => byHour[h] = 0);
+  matches.forEach(r => {
+    if (byHour[r.hora] !== undefined) byHour[r.hora]++;
+  });
+
+  const maxH = Math.max(...Object.values(byHour), 1);
+  const expected = matches.length / hours.length;
+  const expectedPct = Math.min(95, Math.round((expected / maxH) * 100));
+
+  const hourChartEl = document.getElementById("hourChart");
+  hourChartEl.innerHTML = `
+    <div class="expected-line" style="bottom:${expectedPct}%;">
+      <span class="expected-label">Lo esperado (${expected.toFixed(1)})</span>
+    </div>
+    ${hours.map(h => {
+      const val = byHour[h];
+      const pct = Math.round((val / maxH) * 100);
+      const shortH = h === 12 ? "12p" : (h > 12 ? (h - 12) + "p" : h + "a");
+      return `
+        <div class="bar-col">
+          <div class="bar-val">${val}</div>
+          <div class="bar-fill ${val > expected ? 'hot' : ''}" style="height:${pct}%;"></div>
+          <div class="bar-lbl">${shortH}</div>
+        </div>
+      `;
+    }).join("")}
+  `;
+
+  // Por parte del día
+  let manana = 0, tarde = 0, noche = 0;
+  matches.forEach(r => {
+    const h = Number(r.hora);
+    if (h <= 11) manana++;
+    else if (h <= 16) tarde++;
+    else noche++;
+  });
+  document.getElementById("partOfDayBoxes").innerHTML = `
+    <div class="s-box"><div class="v">${manana}</div><div class="l">Mañana (8-11a)</div></div>
+    <div class="s-box"><div class="v">${tarde}</div><div class="l">Tarde (12-4p)</div></div>
+    <div class="s-box"><div class="v">${noche}</div><div class="l">Noche (5-7p)</div></div>
+  `;
+
+  // Por día de la semana
+  const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const byDay = [0, 0, 0, 0, 0, 0, 0];
+  matches.forEach(r => {
+    const d = new Date(r.fecha + "T12:00:00").getDay();
+    if (!isNaN(d)) byDay[d]++;
+  });
+  const maxD = Math.max(...byDay, 1);
+  // Ordenar Lun..Dom
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  document.getElementById("weekdayChart").innerHTML = order.map(dIdx => {
+    const val = byDay[dIdx];
+    const pct = Math.round((val / maxD) * 100);
+    return `
+      <div class="bar-col">
+        <div class="bar-val">${val}</div>
+        <div class="bar-fill" style="height:${pct}%;"></div>
+        <div class="bar-lbl">${dayNames[dIdx]}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+// ============================================================
+// SECUENCIAS & RANKING CALIENTES / FRÍOS
+// ============================================================
+function renderSecuencias() {
+  const list = getLottoData();
+  const stats = computeStats(list);
+  const selAnimal = document.getElementById("seqAnimalSelect").value;
+  const seqEl = document.getElementById("seqResults");
+
+  const nextMap = stats.transitions[selAnimal] || {};
+  const sortedNext = Object.entries(nextMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8);
+
+  if (sortedNext.length === 0) {
+    seqEl.innerHTML = `<div style="color:var(--muted);font-size:0.8rem;">Aún no hay suficientes secuencias registradas después de ${selAnimal}.</div>`;
+  } else {
+    seqEl.innerHTML = sortedNext.map(([aniName, count]) => {
+      const a = findAnimalByName(aniName) || { num: "", emoji: "" };
+      return `
+        <div class="seq-row">
+          <span><b>${a.num}</b> ${a.emoji} ${aniName}</span>
+          <span class="badge">${count} veces</span>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // Hot & Cold
+  const hot = [...ANIMALITOS].sort((a, b) => stats.freq[b.name] - stats.freq[a.name]).slice(0, 8);
+  const cold = [...ANIMALITOS].sort((a, b) => stats.delays[b.name] - stats.delays[a.name]).slice(0, 8);
+
+  document.getElementById("hotList").innerHTML = hot.map(a => `
+    <div class="seq-row">
+      <span><b>${a.num}</b> ${a.name}</span>
+      <span class="badge">${stats.freq[a.name]}x</span>
+    </div>
+  `).join("");
+
+  document.getElementById("coldList").innerHTML = cold.map(a => `
+    <div class="seq-row">
+      <span><b>${a.num}</b> ${a.name}</span>
+      <span class="badge" style="color:var(--amber);background:rgba(251,191,36,0.12);">${stats.delays[a.name]} sor.</span>
+    </div>
+  `).join("");
+}
+
+// ============================================================
+// TABLA DE ÚLTIMOS REGISTROS
+// ============================================================
+function renderHistory() {
+  const list = getLottoData();
+  const recent = list.slice(-25).reverse();
+  const tbody = document.getElementById("histBody");
+  tbody.innerHTML = recent.map(r => {
+    const a = findAnimalByName(r.animal) || { num: r.numero, emoji: "" };
+    return `
+      <tr>
+        <td>${r.fecha}</td>
+        <td>${formatHour(r.hora)}</td>
+        <td style="color:var(--amber);font-weight:800;">${a.num}</td>
+        <td>${a.emoji} ${r.animal}</td>
+        <td style="text-align:right;">
+          <button class="btn btn-danger" style="padding:3px 7px;font-size:0.7rem;" onclick="eliminarRegistro('${r.loteria}','${r.fecha}',${r.hora})">✕</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderAll() {
+  renderPronostico();
+  renderAnimalStats();
+  renderSecuencias();
+  renderHistory();
+}
+
+// Arranque inicial
+document.getElementById("manFecha").value = new Date().toISOString().slice(0, 10);
+populateAnimalSelects();
+loadDB();
+setLotto("lotto");
+</script>
+</body>
+</html>
