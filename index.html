@@ -542,7 +542,7 @@
 
 <header>
   <div class="top-row">
-    <div class="brand">🎯 ANIMALITOS PRO <span>V2.4</span></div>
+    <div class="brand">🎯 ANIMALITOS PRO <span>V2.4.1</span></div>
     <div class="counter-pill">Registros: <b id="totalCount">0</b></div>
   </div>
   <div class="lotto-tabs">
@@ -590,7 +590,7 @@
       </div>
 
       <div id="todayOutWrap" style="display:none;">
-        <label>Ya salieron en la fecha activa (descartados/enfriados):</label>
+        <label>Ya salieron en la fecha activa (no se repiten):</label>
         <div class="today-pills" id="todayOutPills"></div>
       </div>
 
@@ -1273,20 +1273,24 @@ function borrarTodo() {
 }
 
 // ============================================================
-// MOTOR ESTADÍSTICO: PRONÓSTICOS, VENTANA 5 SORTEOS DEL DÍA Y TRIPLETAS
+// MOTOR ESTADÍSTICO: PRONÓSTICOS (+1, +2, +3), VENTANA 5 SORTEOS Y TRIPLETAS
 // ============================================================
 function computeStats(list) {
   const total = list.length;
   const freq = {};
   const hourFreq = {};
   const lastIdx = {};
-  const next1Transitions = {}; // salto exacto +1
+  const next1Transitions = {};
+  const next2Transitions = {};
+  const next3Transitions = {};
 
   ANIMALITOS.forEach(a => {
     freq[a.name] = 0;
     hourFreq[a.name] = {};
     lastIdx[a.name] = -1;
     next1Transitions[a.name] = {};
+    next2Transitions[a.name] = {};
+    next3Transitions[a.name] = {};
   });
 
   list.forEach((r, idx) => {
@@ -1295,10 +1299,20 @@ function computeStats(list) {
       hourFreq[r.animal][r.hora] = (hourFreq[r.animal][r.hora] || 0) + 1;
       lastIdx[r.animal] = idx;
     }
-    if (idx > 0) {
-      const prev = list[idx - 1].animal;
-      if (next1Transitions[prev]) {
-        next1Transitions[prev][r.animal] = (next1Transitions[prev][r.animal] || 0) + 1;
+
+    const originName = r.animal;
+    if (next1Transitions[originName]) {
+      if (idx + 1 < list.length) {
+        const n1 = list[idx + 1].animal;
+        next1Transitions[originName][n1] = (next1Transitions[originName][n1] || 0) + 1;
+      }
+      if (idx + 2 < list.length) {
+        const n2 = list[idx + 2].animal;
+        next2Transitions[originName][n2] = (next2Transitions[originName][n2] || 0) + 1;
+      }
+      if (idx + 3 < list.length) {
+        const n3 = list[idx + 3].animal;
+        next3Transitions[originName][n3] = (next3Transitions[originName][n3] || 0) + 1;
       }
     }
   });
@@ -1310,7 +1324,16 @@ function computeStats(list) {
     avgIntervals[a.name] = freq[a.name] > 1 ? (total / freq[a.name]) : 38;
   });
 
-  return { total, freq, hourFreq, delays, avgIntervals, next1Transitions };
+  return {
+    total,
+    freq,
+    hourFreq,
+    delays,
+    avgIntervals,
+    next1Transitions,
+    next2Transitions,
+    next3Transitions
+  };
 }
 
 // Calcula qué animales salen con más frecuencia en los siguientes N sorteos DEL MISMO DÍA tras un disparador
@@ -1465,22 +1488,25 @@ function renderDayTripleta(list, outTodaySet) {
       chainNotes.push(`• <b>${formatHour(draw.hora)}</b> salió <b>${draw.animal}</b> → en 5 sorteos del día llama: ${summaryLine}`);
     }
     winCalc.ranked.slice(0, 6).forEach((cand, idx) => {
-      const notOutBonus = outTodaySet.has(cand.name) ? 0.45 : 1.0;
-      const weight = (Number(cand.pct) * 1.4 + (6 - idx) * 6) * notOutBonus;
+      if (outTodaySet.has(cand.name)) return;
+      const weight = Number(cand.pct) * 1.4 + (6 - idx) * 6;
       candidateScores[cand.name] += weight;
     });
   });
 
   const rankedCandidates = ANIMALITOS
-    .map(a => ({ ...a, dayScore: candidateScores[a.name] || 0 }))
     .filter(a => !outTodaySet.has(a.name))
+    .map(a => ({ ...a, dayScore: candidateScores[a.name] || 0 }))
+    .filter(a => a.dayScore > 0)
     .sort((a, b) => b.dayScore - a.dayScore);
 
-  const fallbackPool = rankedCandidates.length >= 3
-    ? rankedCandidates
-    : ANIMALITOS.map(a => ({ ...a, dayScore: candidateScores[a.name] || 0 })).sort((a, b) => b.dayScore - a.dayScore);
+  if (rankedCandidates.length < 3) {
+    lastGeneratedTripletaNames = [];
+    container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">No hay suficientes animales pendientes con llamada clara en los próximos 5 sorteos para armar la tripleta del día.</div>`;
+    return;
+  }
 
-  const picked3 = fallbackPool.slice(0, 3);
+  const picked3 = rankedCandidates.slice(0, 3);
   lastGeneratedTripletaNames = picked3.map(x => x.name);
 
   const maxDayScore = Math.max(picked3[0]?.dayScore || 1, 1);
@@ -1553,85 +1579,112 @@ function renderPronostico() {
 
   const stats = computeStats(list);
 
-  // Top 10 enfocado en siguiente sorteo (+1), afinidad horaria, ciclo/atraso y frecuencia
-  const scored = ANIMALITOS.map(a => {
-    const hHits = stats.hourFreq[a.name][targetHour] || 0;
-    const seqHits = (stats.next1Transitions[last.animal] && stats.next1Transitions[last.animal][a.name]) || 0;
-    const delay = stats.delays[a.name];
-    const cycle = stats.avgIntervals[a.name] || 38;
-    const totalHits = stats.freq[a.name];
+  // Solo animales que NO han salido hoy y tienen posibilidad real (ciclo, hora o secuencia +1/+2/+3)
+  const viable = ANIMALITOS
+    .filter(a => !outTodaySet.has(a.name))
+    .map(a => {
+      const hHits = stats.hourFreq[a.name][targetHour] || 0;
+      const s1 = (stats.next1Transitions[last.animal] && stats.next1Transitions[last.animal][a.name]) || 0;
+      const s2 = (stats.next2Transitions[last.animal] && stats.next2Transitions[last.animal][a.name]) || 0;
+      const s3 = (stats.next3Transitions[last.animal] && stats.next3Transitions[last.animal][a.name]) || 0;
 
-    const sameDayPenalty = outTodaySet.has(a.name) ? 0.55 : 1.0;
+      const delay = stats.delays[a.name];
+      const cycle = stats.avgIntervals[a.name] || 38;
+      const totalHits = stats.freq[a.name];
+      const cycleRatio = delay / Math.max(cycle, 1);
 
-    const cycleRatio = Math.min(delay / Math.max(cycle, 1), 2.3);
-    const delayScore = cycleRatio * 40;
-    const hourScore = hHits * 11;
-    const seqScore = seqHits * 15;
-    const freqScore = (totalHits / Math.max(stats.total, 1)) * 120;
+      const hasRealSignal = (cycleRatio >= 0.75) || (hHits >= 2) || ((s1 + s2 + s3) >= 2);
+      if (!hasRealSignal) return null;
 
-    const rawScore = (delayScore + hourScore + seqScore + freqScore) * sameDayPenalty;
+      const delayScore = Math.min(cycleRatio, 2.3) * 40;
+      const hourScore = hHits * 11;
+      const seqScore = s1 * 15 + s2 * 7 + s3 * 4;
+      const freqScore = (totalHits / Math.max(stats.total, 1)) * 120;
 
-    return {
-      ...a,
-      score: rawScore,
-      delay,
-      hHits,
-      seqHits,
-      outToday: outTodaySet.has(a.name)
-    };
-  }).sort((a, b) => b.score - a.score);
+      const rawScore = delayScore + hourScore + seqScore + freqScore;
 
-  const maxScore = scored[0]?.score || 1;
-  const top10 = scored.slice(0, 10);
+      const jumpCandidates = [
+        { label: "+1", val: s1 * 15, raw: s1 },
+        { label: "+2", val: s2 * 7, raw: s2 },
+        { label: "+3", val: s3 * 4, raw: s3 }
+      ].sort((x, y) => y.val - x.val || y.raw - x.raw);
 
-  top10El.innerHTML = top10.map((item, i) => {
-    const pct = Math.min(96, Math.max(52, Math.round((item.score / maxScore) * 92)));
-    return `
-      <div class="pred-item ${i === 0 ? "rank-1" : ""}">
-        <div class="pred-left">
-          <div class="pred-rank">${i + 1}</div>
-          <div>
-            <div><span class="pred-num">${item.num}</span> <span class="pred-name">${item.emoji} ${item.name}</span></div>
-            <div class="pred-meta">Atraso: ${item.delay} • Hora: ${item.hHits}x • +1: ${item.seqHits}x</div>
+      const bestJump = jumpCandidates[0].raw > 0 ? jumpCandidates[0].label : "+1";
+
+      return {
+        ...a,
+        score: rawScore,
+        delay,
+        hHits,
+        s1,
+        s2,
+        s3,
+        bestJump
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score);
+
+  const top10 = viable.slice(0, 10);
+
+  if (top10.length === 0) {
+    top10El.innerHTML = `<div style="color:var(--muted);font-size:0.8rem;">Ningún animal pendiente de hoy supera el filtro mínimo de posibilidad para este sorteo.</div>`;
+  } else {
+    const maxScore = top10[0].score || 1;
+    top10El.innerHTML = top10.map((item, i) => {
+      const pct = Math.min(96, Math.max(52, Math.round((item.score / maxScore) * 92)));
+      return `
+        <div class="pred-item ${i === 0 ? "rank-1" : ""}">
+          <div class="pred-left">
+            <div class="pred-rank">${i + 1}</div>
+            <div>
+              <div><span class="pred-num">${item.num}</span> <span class="pred-name">${item.emoji} ${item.name}</span></div>
+              <div class="pred-meta">Atr: ${item.delay} • Hora: ${item.hHits}x • +1:${item.s1} +2:${item.s2} +3:${item.s3} (${item.bestJump})</div>
+            </div>
           </div>
+          <div class="pred-score">${pct}%</div>
         </div>
-        <div class="pred-score">${pct}%</div>
-      </div>
-    `;
-  }).join("");
+      `;
+    }).join("");
+  }
 
   renderDayTripleta(list, outTodaySet);
   renderSavedTripleta(list, outTodaySet, stats, targetHour);
 
-  const candidates = scored.filter(a => !a.outToday);
-  const pool = candidates.length >= 9 ? candidates : scored;
+  if (viable.length >= 3) {
+    const t1 = [viable[0], viable[1], viable[2]];
+    const t2 = viable.length >= 5 ? [viable[0], viable[3], viable[4]] : t1;
+    const t3 = viable.length >= 7 ? [viable[1], viable[5], viable[6]] : t1;
 
-  const tripletas = [
-    { title: "Tripleta #1 • Ciclo + Hora", items: [pool[0], pool[1], pool[2]] },
-    { title: "Tripleta #2 • Llamado + Ciclo", items: [pool[0], pool[3], pool[4]] },
-    { title: "Tripleta #3 • Cobertura 11 Sorteos", items: [pool[1], pool[5], pool[6]] }
-  ];
+    const tripletas = [
+      { title: "Tripleta #1 • Ciclo + Hora", items: t1 },
+      { title: "Tripleta #2 • Saltos + Ciclo", items: t2 },
+      { title: "Tripleta #3 • Cobertura 11 Sorteos", items: t3 }
+    ];
 
-  tripEl.innerHTML = tripletas.map(t => {
-    const copyStr = t.items.map(x => `${x.num} ${x.name}`).join(" - ");
-    return `
-      <div class="tripleta-card">
-        <div class="tripleta-header">
-          <b>${t.title}</b>
-          <button class="btn btn-dark" style="padding:3px 8px;font-size:0.7rem;" onclick="copiarTexto('${copyStr}')">Copiar</button>
+    tripEl.innerHTML = tripletas.map(t => {
+      const copyStr = t.items.map(x => `${x.num} ${x.name}`).join(" - ");
+      return `
+        <div class="tripleta-card">
+          <div class="tripleta-header">
+            <b>${t.title}</b>
+            <button class="btn btn-dark" style="padding:3px 8px;font-size:0.7rem;" onclick="copiarTexto('${copyStr}')">Copiar</button>
+          </div>
+          <div class="tripleta-animals">
+            ${t.items.map(x => `
+              <div class="trip-box">
+                <div class="num">${x.num}</div>
+                <div class="ani">${x.emoji} ${x.name}</div>
+                <div class="delay">${x.delay} sin salir • ${x.bestJump}</div>
+              </div>
+            `).join("")}
+          </div>
         </div>
-        <div class="tripleta-animals">
-          ${t.items.map(x => `
-            <div class="trip-box">
-              <div class="num">${x.num}</div>
-              <div class="ani">${x.emoji} ${x.name}</div>
-              <div class="delay">${x.delay} sin salir</div>
-            </div>
-          `).join("")}
-        </div>
-      </div>
-    `;
-  }).join("");
+      `;
+    }).join("");
+  } else {
+    tripEl.innerHTML = `<div style="color:var(--muted);font-size:0.78rem;">No hay suficientes animales con señal clara para armar tripletas sin repetir los ya salidos hoy.</div>`;
+  }
 }
 
 function copiarTexto(txt) {
