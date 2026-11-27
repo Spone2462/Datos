@@ -25,7 +25,7 @@
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     line-height: 1.4;
-    padding-bottom: 40px;
+    padding-bottom: 44px;
   }
   header {
     background: linear-gradient(180deg, #111827 0%, #0b0f17 100%);
@@ -193,8 +193,8 @@
   .btn {
     border: none;
     border-radius: 9px;
-    padding: 10px 14px;
-    font-size: 0.82rem;
+    padding: 9px 13px;
+    font-size: 0.8rem;
     font-weight: 800;
     cursor: pointer;
     display: inline-flex;
@@ -205,6 +205,7 @@
   }
   .btn:active { transform: scale(0.98); }
   .btn-primary { background: var(--accent); color: #041d11; width: 100%; }
+  .btn-green-sm { background: var(--accent); color: #041d11; }
   .btn-blue { background: var(--blue); color: #051829; }
   .btn-dark { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
   .btn-danger { background: rgba(248, 113, 113, 0.15); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.35); }
@@ -272,21 +273,31 @@
     color: var(--accent);
   }
 
-  /* Tripletas */
+  /* Tripletas y Tripleta Guardada */
   .tripleta-card {
     background: var(--card2);
     border: 1px solid var(--border);
     border-radius: 11px;
     padding: 11px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+  }
+  .tripleta-card.day-builder {
+    border-color: rgba(56, 189, 248, 0.45);
+    background: rgba(56, 189, 248, 0.05);
+  }
+  .tripleta-card.saved-box {
+    border-color: rgba(0, 230, 118, 0.55);
+    background: rgba(0, 230, 118, 0.06);
   }
   .tripleta-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
-    font-size: 0.75rem;
-    color: var(--muted);
+    font-size: 0.76rem;
+    color: var(--text);
+    gap: 6px;
+    flex-wrap: wrap;
   }
   .tripleta-animals {
     display: grid;
@@ -297,12 +308,38 @@
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 7px 6px;
+    padding: 8px 6px;
     text-align: center;
   }
-  .trip-box .num { color: var(--accent); font-weight: 900; font-size: 0.85rem; }
+  .trip-box.hit-ok {
+    border-color: var(--accent);
+    background: rgba(0, 230, 118, 0.14);
+  }
+  .trip-box .num { color: var(--accent); font-weight: 900; font-size: 0.86rem; }
   .trip-box .ani { font-weight: 700; font-size: 0.76rem; }
-  .trip-box .delay { font-size: 0.64rem; color: var(--muted); }
+  .trip-box .delay { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+  .trip-box .status-tag {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.63rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 5px;
+  }
+  .tag-hit { background: var(--accent); color: #041d11; }
+  .tag-pend { background: rgba(167, 139, 250, 0.18); color: var(--purple); }
+
+  .chain-list {
+    margin-top: 8px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .chain-list div { margin-bottom: 3px; }
+  .chain-list div:last-child { margin-bottom: 0; }
 
   /* Gráfico de Barras */
   .chart-wrap {
@@ -456,14 +493,6 @@
     font-weight: 800;
     font-size: 0.72rem;
   }
-  .badge-blue {
-    background: rgba(56, 189, 248, 0.16);
-    color: var(--blue);
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-weight: 800;
-    font-size: 0.72rem;
-  }
   .badge-purple {
     background: rgba(167, 139, 250, 0.16);
     color: var(--purple);
@@ -513,7 +542,7 @@
 
 <header>
   <div class="top-row">
-    <div class="brand">🎯 ANIMALITOS PRO <span>V2.3</span></div>
+    <div class="brand">🎯 ANIMALITOS PRO <span>V2.4</span></div>
     <div class="counter-pill">Registros: <b id="totalCount">0</b></div>
   </div>
   <div class="lotto-tabs">
@@ -561,16 +590,35 @@
       </div>
 
       <div id="todayOutWrap" style="display:none;">
-        <label>Ya salieron hoy (descartados/enfriados):</label>
+        <label>Ya salieron en la fecha activa (descartados/enfriados):</label>
         <div class="today-pills" id="todayOutPills"></div>
       </div>
 
       <div class="top10-list" id="top10Container"></div>
     </div>
 
+    <!-- TRIPLETA GUARDADA Y SEGUIMIENTO EN VIVO -->
     <div class="card">
       <div class="card-title">
-        <span>🎰 Tripletas (Ciclo 11 Sorteos)</span>
+        <span>📌 Tripleta Guardada & Seguimiento</span>
+        <span class="sub" id="savedTripBadge">Sin tripleta guardada</span>
+      </div>
+      <div id="savedTripletaContainer"></div>
+    </div>
+
+    <!-- TRIPLETA ARMADA POR LO QUE YA SALIÓ HOY (PRÓXIMOS 5 SORTEOS DEL DÍA) -->
+    <div class="card">
+      <div class="card-title">
+        <span>🧩 Tripleta por Lo Que Ya Salió Hoy</span>
+        <span class="sub">Ventana próximos 5 sorteos del día</span>
+      </div>
+      <div id="dayTripletaContainer"></div>
+    </div>
+
+    <!-- TRIPLETAS GENERALES -->
+    <div class="card">
+      <div class="card-title">
+        <span>🎰 Tripletas Sugeridas (Ciclo 11 Sorteos)</span>
         <span class="sub">Alta probabilidad conjunta</span>
       </div>
       <div id="tripletasContainer"></div>
@@ -870,9 +918,12 @@ const ANIMALITOS = [
 ];
 
 const STORAGE_KEY = "animalitos_pro_v2_db";
+const SAVED_TRIPLETA_KEY = "animalitos_pro_saved_tripleta_v1";
 let currentLotto = "lotto"; // 'lotto' | 'granjita' | 'ruleta'
 let db = [];
+let savedTripleta = null;
 let userPickedSeqAnimal = false;
+let lastGeneratedTripletaNames = [];
 
 const LOTTO_CONFIG = {
   lotto:    { label: "Lotto Activo",  hours: [8,9,10,11,12,13,14,15,16,17,18,19] },
@@ -930,11 +981,50 @@ function loadDB() {
   } catch (e) {
     db = [];
   }
+  try {
+    const rawTrip = localStorage.getItem(SAVED_TRIPLETA_KEY);
+    savedTripleta = rawTrip ? JSON.parse(rawTrip) : null;
+  } catch (e) {
+    savedTripleta = null;
+  }
 }
 
 function saveDB() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
   updateCounters();
+}
+
+function saveTripletaToStorage(namesArr, sourceLabel) {
+  const cleanNames = namesArr
+    .map(n => findAnimalByName(n)?.name)
+    .filter(Boolean)
+    .slice(0, 3);
+
+  if (cleanNames.length < 3) {
+    showToast("Selecciona 3 animales válidos para guardar");
+    return;
+  }
+
+  const list = getLottoData();
+  const activeDate = list.length > 0 ? list[list.length - 1].fecha : new Date().toISOString().slice(0, 10);
+
+  savedTripleta = {
+    loteria: currentLotto,
+    fecha: activeDate,
+    animals: cleanNames,
+    source: sourceLabel || "Tripleta guardada",
+    savedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  };
+  localStorage.setItem(SAVED_TRIPLETA_KEY, JSON.stringify(savedTripleta));
+  renderPronostico();
+  showToast(`📌 Tripleta guardada: ${cleanNames.join(" - ")}`);
+}
+
+function clearSavedTripleta() {
+  savedTripleta = null;
+  localStorage.removeItem(SAVED_TRIPLETA_KEY);
+  renderPronostico();
+  showToast("Tripleta guardada eliminada");
 }
 
 function updateCounters() {
@@ -1183,20 +1273,20 @@ function borrarTodo() {
 }
 
 // ============================================================
-// MOTOR ESTADÍSTICO: PRONÓSTICOS (TOP 10) Y TRIPLETAS (11 SORTEOS)
+// MOTOR ESTADÍSTICO: PRONÓSTICOS, VENTANA 5 SORTEOS DEL DÍA Y TRIPLETAS
 // ============================================================
 function computeStats(list) {
   const total = list.length;
   const freq = {};
   const hourFreq = {};
   const lastIdx = {};
-  const transitions = {};
+  const next1Transitions = {}; // salto exacto +1
 
   ANIMALITOS.forEach(a => {
     freq[a.name] = 0;
     hourFreq[a.name] = {};
     lastIdx[a.name] = -1;
-    transitions[a.name] = {};
+    next1Transitions[a.name] = {};
   });
 
   list.forEach((r, idx) => {
@@ -1207,18 +1297,219 @@ function computeStats(list) {
     }
     if (idx > 0) {
       const prev = list[idx - 1].animal;
-      if (transitions[prev]) {
-        transitions[prev][r.animal] = (transitions[prev][r.animal] || 0) + 1;
+      if (next1Transitions[prev]) {
+        next1Transitions[prev][r.animal] = (next1Transitions[prev][r.animal] || 0) + 1;
       }
     }
   });
 
   const delays = {};
+  const avgIntervals = {};
   ANIMALITOS.forEach(a => {
     delays[a.name] = lastIdx[a.name] === -1 ? total : (total - 1 - lastIdx[a.name]);
+    avgIntervals[a.name] = freq[a.name] > 1 ? (total / freq[a.name]) : 38;
   });
 
-  return { total, freq, hourFreq, delays, transitions };
+  return { total, freq, hourFreq, delays, avgIntervals, next1Transitions };
+}
+
+// Calcula qué animales salen con más frecuencia en los siguientes N sorteos DEL MISMO DÍA tras un disparador
+function computeSameDayWindowCalls(list, triggerAnimal, windowSpan = 5) {
+  const hitCount = {};
+  const windowHits = {};
+  ANIMALITOS.forEach(a => {
+    hitCount[a.name] = 0;
+    windowHits[a.name] = 0;
+  });
+
+  let triggers = 0;
+
+  for (let i = 0; i < list.length; i++) {
+    const cur = list[i];
+    if (cur.animal !== triggerAnimal) continue;
+
+    triggers++;
+    const sameDayNext = [];
+    for (let j = i + 1; j < list.length && sameDayNext.length < windowSpan; j++) {
+      if (list[j].fecha === cur.fecha) {
+        sameDayNext.push(list[j]);
+      } else {
+        break;
+      }
+    }
+
+    const seen = new Set();
+    sameDayNext.forEach(item => {
+      hitCount[item.animal] = (hitCount[item.animal] || 0) + 1;
+      seen.add(item.animal);
+    });
+    seen.forEach(ani => {
+      windowHits[ani] = (windowHits[ani] || 0) + 1;
+    });
+  }
+
+  const ranked = Object.entries(windowHits)
+    .filter(([, wCount]) => wCount > 0)
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return (hitCount[b[0]] || 0) - (hitCount[a[0]] || 0);
+    })
+    .map(([name, wCount]) => ({
+      name,
+      wCount,
+      hits: hitCount[name] || 0,
+      pct: triggers > 0 ? ((wCount / triggers) * 100).toFixed(1) : "0.0"
+    }));
+
+  return { triggers, ranked };
+}
+
+function renderSavedTripleta(list, outTodaySet, stats, targetHour) {
+  const container = document.getElementById("savedTripletaContainer");
+  const badge = document.getElementById("savedTripBadge");
+
+  if (!savedTripleta || !Array.isArray(savedTripleta.animals) || savedTripleta.animals.length < 3) {
+    badge.textContent = "Sin guardar";
+    container.innerHTML = `
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">
+        No tienes una tripleta guardada todavía. Puedes guardar la tripleta armada de hoy o elegir 3 animales manualmente.
+      </div>
+      <div class="grid-3" style="margin-bottom:8px;">
+        <select id="pickTrip1">${ANIMALITOS.map(a => `<option value="${a.name}">${a.num} ${a.name}</option>`).join("")}</select>
+        <select id="pickTrip2">${ANIMALITOS.map((a, i) => `<option value="${a.name}" ${i===1?'selected':''}>${a.num} ${a.name}</option>`).join("")}</select>
+        <select id="pickTrip3">${ANIMALITOS.map((a, i) => `<option value="${a.name}" ${i===2?'selected':''}>${a.num} ${a.name}</option>`).join("")}</select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-green-sm" onclick="saveTripletaFromSelectors()">💾 Guardar Esta Tripleta</button>
+        ${lastGeneratedTripletaNames.length === 3 ? `<button class="btn btn-dark" onclick="saveTripletaToStorage(lastGeneratedTripletaNames, 'Tripleta del día')">⚡ Guardar la de Hoy</button>` : ""}
+      </div>
+    `;
+    return;
+  }
+
+  const latestDate = list.length > 0 ? list[list.length - 1].fecha : savedTripleta.fecha;
+  const sameDayActive = savedTripleta.loteria === currentLotto && savedTripleta.fecha === latestDate;
+  badge.textContent = `${LOTTO_CONFIG[savedTripleta.loteria]?.label || savedTripleta.loteria} • ${savedTripleta.fecha}`;
+
+  let hitsCount = 0;
+  const boxesHtml = savedTripleta.animals.slice(0, 3).map(aniName => {
+    const a = findAnimalByName(aniName) || { num: "?", name: aniName, emoji: "" };
+    const salioHoy = sameDayActive && outTodaySet.has(a.name);
+    if (salioHoy) hitsCount++;
+
+    const delay = stats.delays[a.name] || 0;
+    const cycle = stats.avgIntervals[a.name] || 38;
+    const hHits = (stats.hourFreq[a.name] && stats.hourFreq[a.name][targetHour]) || 0;
+    const cycleRatio = Math.min(delay / Math.max(cycle, 1), 2.0);
+    const estProb = salioHoy
+      ? 100
+      : Math.min(78, Math.max(8, Math.round(12 + cycleRatio * 18 + hHits * 4)));
+
+    return `
+      <div class="trip-box ${salioHoy ? "hit-ok" : ""}">
+        <div class="num">${a.num}</div>
+        <div class="ani">${a.emoji} ${a.name}</div>
+        <div class="delay">${salioHoy ? "Ya salió en la jornada" : `Prob. est.: ${estProb}% • Atr: ${delay}`}</div>
+        <span class="status-tag ${salioHoy ? "tag-hit" : "tag-pend"}">
+          ${salioHoy ? "✅ SALIÓ" : `⏳ FALTA (${estProb}%)`}
+        </span>
+      </div>
+    `;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="tripleta-card saved-box">
+      <div class="tripleta-header">
+        <b>Aciertos en jornada (${latestDate}): ${hitsCount}/3 • ${savedTripleta.source || "Guardada"}</b>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-dark" style="padding:4px 8px;font-size:0.7rem;" onclick="copiarTexto('${savedTripleta.animals.join(" - ")}')">Copiar</button>
+          <button class="btn btn-danger" style="padding:4px 8px;font-size:0.7rem;" onclick="clearSavedTripleta()">Borrar</button>
+        </div>
+      </div>
+      <div class="tripleta-animals">${boxesHtml}</div>
+    </div>
+  `;
+}
+
+function saveTripletaFromSelectors() {
+  const n1 = document.getElementById("pickTrip1").value;
+  const n2 = document.getElementById("pickTrip2").value;
+  const n3 = document.getElementById("pickTrip3").value;
+  saveTripletaToStorage([n1, n2, n3], "Manual");
+}
+
+function renderDayTripleta(list, outTodaySet) {
+  const container = document.getElementById("dayTripletaContainer");
+  if (list.length === 0) {
+    container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">Carga resultados para armar la tripleta según lo que ya salió en el día.</div>`;
+    return;
+  }
+
+  const latestDate = list[list.length - 1].fecha;
+  const todayDraws = list.filter(r => r.fecha === latestDate);
+
+  if (todayDraws.length === 0) {
+    container.innerHTML = `<div style="font-size:0.78rem;color:var(--muted);">Sin sorteos registrados en ${latestDate}.</div>`;
+    return;
+  }
+
+  const candidateScores = {};
+  const chainNotes = [];
+  ANIMALITOS.forEach(a => { candidateScores[a.name] = 0; });
+
+  todayDraws.forEach(draw => {
+    const winCalc = computeSameDayWindowCalls(list, draw.animal, 5);
+    const topCalls = winCalc.ranked.slice(0, 3);
+    if (topCalls.length > 0) {
+      const summaryLine = topCalls.map(c => `${c.name} (${c.pct}%)`).join(", ");
+      chainNotes.push(`• <b>${formatHour(draw.hora)}</b> salió <b>${draw.animal}</b> → en 5 sorteos del día llama: ${summaryLine}`);
+    }
+    winCalc.ranked.slice(0, 6).forEach((cand, idx) => {
+      const notOutBonus = outTodaySet.has(cand.name) ? 0.45 : 1.0;
+      const weight = (Number(cand.pct) * 1.4 + (6 - idx) * 6) * notOutBonus;
+      candidateScores[cand.name] += weight;
+    });
+  });
+
+  const rankedCandidates = ANIMALITOS
+    .map(a => ({ ...a, dayScore: candidateScores[a.name] || 0 }))
+    .filter(a => !outTodaySet.has(a.name))
+    .sort((a, b) => b.dayScore - a.dayScore);
+
+  const fallbackPool = rankedCandidates.length >= 3
+    ? rankedCandidates
+    : ANIMALITOS.map(a => ({ ...a, dayScore: candidateScores[a.name] || 0 })).sort((a, b) => b.dayScore - a.dayScore);
+
+  const picked3 = fallbackPool.slice(0, 3);
+  lastGeneratedTripletaNames = picked3.map(x => x.name);
+
+  const maxDayScore = Math.max(picked3[0]?.dayScore || 1, 1);
+  const copyStr = picked3.map(x => `${x.num} ${x.name}`).join(" - ");
+
+  container.innerHTML = `
+    <div class="tripleta-card day-builder">
+      <div class="tripleta-header">
+        <b>Fecha ${latestDate} • Basada en ${todayDraws.length} sorteo(s) del día</b>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-green-sm" style="padding:4px 8px;font-size:0.7rem;" onclick="saveTripletaToStorage(lastGeneratedTripletaNames, 'Armada del día')">💾 Guardar</button>
+          <button class="btn btn-dark" style="padding:4px 8px;font-size:0.7rem;" onclick="copiarTexto('${copyStr}')">Copiar</button>
+        </div>
+      </div>
+      <div class="tripleta-animals">
+        ${picked3.map(x => {
+          const relPct = Math.min(88, Math.max(22, Math.round((x.dayScore / maxDayScore) * 78)));
+          return `
+            <div class="trip-box">
+              <div class="num">${x.num}</div>
+              <div class="ani">${x.emoji} ${x.name}</div>
+              <div class="delay">Peso 5 sorteos: ${relPct}%</div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+      <div class="chain-list">${chainNotes.slice(-4).join("")}</div>
+    </div>
+  `;
 }
 
 function renderPronostico() {
@@ -1234,6 +1525,8 @@ function renderPronostico() {
     outWrap.style.display = "none";
     top10El.innerHTML = `<div style="color:var(--muted);font-size:0.8rem;">Carga resultados en la pestaña "Cargar / JSON" para generar pronósticos.</div>`;
     tripEl.innerHTML = "";
+    renderSavedTripleta([], new Set(), computeStats([]), 8);
+    renderDayTripleta([], new Set());
     return;
   }
 
@@ -1259,19 +1552,21 @@ function renderPronostico() {
   }
 
   const stats = computeStats(list);
-  const avgDelay = 38;
 
+  // Top 10 enfocado en siguiente sorteo (+1), afinidad horaria, ciclo/atraso y frecuencia
   const scored = ANIMALITOS.map(a => {
     const hHits = stats.hourFreq[a.name][targetHour] || 0;
-    const seqHits = (stats.transitions[last.animal] && stats.transitions[last.animal][a.name]) || 0;
+    const seqHits = (stats.next1Transitions[last.animal] && stats.next1Transitions[last.animal][a.name]) || 0;
     const delay = stats.delays[a.name];
+    const cycle = stats.avgIntervals[a.name] || 38;
     const totalHits = stats.freq[a.name];
 
     const sameDayPenalty = outTodaySet.has(a.name) ? 0.55 : 1.0;
 
-    const delayScore = Math.min(delay / avgDelay, 2.2) * 38;
+    const cycleRatio = Math.min(delay / Math.max(cycle, 1), 2.3);
+    const delayScore = cycleRatio * 40;
     const hourScore = hHits * 11;
-    const seqScore = seqHits * 14;
+    const seqScore = seqHits * 15;
     const freqScore = (totalHits / Math.max(stats.total, 1)) * 120;
 
     const rawScore = (delayScore + hourScore + seqScore + freqScore) * sameDayPenalty;
@@ -1297,7 +1592,7 @@ function renderPronostico() {
           <div class="pred-rank">${i + 1}</div>
           <div>
             <div><span class="pred-num">${item.num}</span> <span class="pred-name">${item.emoji} ${item.name}</span></div>
-            <div class="pred-meta">Atraso: ${item.delay} • Hora: ${item.hHits}x • Sec: ${item.seqHits}x</div>
+            <div class="pred-meta">Atraso: ${item.delay} • Hora: ${item.hHits}x • +1: ${item.seqHits}x</div>
           </div>
         </div>
         <div class="pred-score">${pct}%</div>
@@ -1305,12 +1600,15 @@ function renderPronostico() {
     `;
   }).join("");
 
+  renderDayTripleta(list, outTodaySet);
+  renderSavedTripleta(list, outTodaySet, stats, targetHour);
+
   const candidates = scored.filter(a => !a.outToday);
   const pool = candidates.length >= 9 ? candidates : scored;
 
   const tripletas = [
-    { title: "Tripleta #1 • Deuda + Hora", items: [pool[0], pool[1], pool[2]] },
-    { title: "Tripleta #2 • Secuencia + Ciclo", items: [pool[0], pool[3], pool[4]] },
+    { title: "Tripleta #1 • Ciclo + Hora", items: [pool[0], pool[1], pool[2]] },
+    { title: "Tripleta #2 • Llamado + Ciclo", items: [pool[0], pool[3], pool[4]] },
     { title: "Tripleta #3 • Cobertura 11 Sorteos", items: [pool[1], pool[5], pool[6]] }
   ];
 
@@ -1691,14 +1989,12 @@ function renderSecuencias() {
   document.getElementById("crossBadge").textContent = windowMode === "same_hour" ? "Misma hora" : `Próx. ${windowMode}`;
   document.getElementById("sameLottoBadge").textContent = targetLabel;
 
-  // 1. Secuencia cruzada
   const cross = computeCrossSequence(originKey, targetKey, selAnimal, windowMode, hourFilter);
   summaryEl.innerHTML =
     `<b>${selAnimal}</b> en <b>${originLabel}</b> (${hourText}: ${cross.totalOriginTriggers} salidas) → ` +
     `${winText} en <b>${targetLabel}</b>: <b>${cross.evaluatedTriggers}</b> ciclos evaluados.`;
   seqEl.innerHTML = formatRankingRows(cross, windowMode, "top-hit");
 
-  // 2. Secuencia interna en la misma lotería destino
   const sameData = computeSameLottoSequence(targetKey, windowMode, hourFilter);
   if (!sameData.latestAnimal) {
     sameSummaryEl.innerHTML = `Sin registros en <b>${targetLabel}</b> para calcular secuencia interna.`;
@@ -1712,7 +2008,6 @@ function renderSecuencias() {
     sameEl.innerHTML = formatRankingRows(sameData, windowMode, "same-hit");
   }
 
-  // Hot & Cold
   const list = getLottoData();
   const stats = computeStats(list);
   const hot = [...ANIMALITOS].sort((a, b) => stats.freq[b.name] - stats.freq[a.name]).slice(0, 8);
